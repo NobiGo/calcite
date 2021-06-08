@@ -58,8 +58,14 @@ plugins {
 }
 
 repositories {
-    // At least for RAT
-    mavenCentral()
+    maven {
+        isAllowInsecureProtocol = true
+        url = uri("https://maven.aliyun.com/repository/public/")
+    }
+    maven {
+        isAllowInsecureProtocol = true
+        url = uri("https://maven.aliyun.com/repository/gradle-plugin")
+    }
 }
 
 fun reportsForHumans() = !(System.getenv()["CI"]?.toBoolean() ?: false)
@@ -291,8 +297,14 @@ allprojects {
     apply(plugin = "com.github.vlsi.gradle-extensions")
 
     repositories {
-        // RAT and Autostyle dependencies
-        mavenCentral()
+        maven {
+            isAllowInsecureProtocol = true
+            url = uri("https://maven.aliyun.com/repository/public/")
+        }
+        maven {
+            isAllowInsecureProtocol = true
+            url = uri("https://maven.aliyun.com/repository/gradle-plugin")
+        }
     }
 
     val javaUsed = file("src/main/java").isDirectory
@@ -465,9 +477,23 @@ allprojects {
 
         repositories {
             if (enableMavenLocal) {
-                mavenLocal()
+                maven {
+                    isAllowInsecureProtocol = true
+                    url = uri("https://maven.aliyun.com/repository/public/")
+                }
+                maven {
+                    isAllowInsecureProtocol = true
+                    url = uri("https://maven.aliyun.com/repository/gradle-plugin")
+                }
             }
-            mavenCentral()
+            maven {
+                isAllowInsecureProtocol = true
+                url = uri("https://maven.aliyun.com/repository/public/")
+            }
+            maven {
+                isAllowInsecureProtocol = true
+                url = uri("https://maven.aliyun.com/repository/gradle-plugin")
+            }
         }
         val sourceSets: SourceSetContainer by project
 
