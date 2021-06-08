@@ -42,8 +42,24 @@ pluginManagement {
     }
     if (extra.has("enableMavenLocal") && extra["enableMavenLocal"].toString().ifBlank { "true" }.toBoolean()) {
         repositories {
-            mavenLocal()
-            gradlePluginPortal()
+            maven {
+                isAllowInsecureProtocol = true
+                url = uri("https://maven.aliyun.com/repository/public/")
+            }
+            maven {
+                isAllowInsecureProtocol = true
+                url = uri("https://maven.aliyun.com/repository/gradle-plugin")
+            }
+        }
+    }
+    repositories {
+        maven {
+            isAllowInsecureProtocol = true
+            url = uri("https://maven.aliyun.com/repository/public/")
+        }
+        maven {
+            isAllowInsecureProtocol = true
+            url = uri("https://maven.aliyun.com/repository/gradle-plugin")
         }
     }
 }

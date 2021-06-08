@@ -26,16 +26,28 @@ plugins {
 }
 
 repositories {
-    mavenCentral()
-    gradlePluginPortal()
+    maven {
+        isAllowInsecureProtocol = true
+        url = uri("https://maven.aliyun.com/repository/public/")
+    }
+    maven {
+        isAllowInsecureProtocol = true
+        url = uri("https://maven.aliyun.com/repository/gradle-plugin")
+    }
 }
 
 val skipAutostyle by props()
 
 allprojects {
     repositories {
-        mavenCentral()
-        gradlePluginPortal()
+        maven {
+            isAllowInsecureProtocol = true
+            url = uri("https://maven.aliyun.com/repository/public/")
+        }
+        maven {
+            isAllowInsecureProtocol = true
+            url = uri("https://maven.aliyun.com/repository/gradle-plugin")
+        }
     }
     applyKotlinProjectConventions()
     tasks.withType<AbstractArchiveTask>().configureEach {

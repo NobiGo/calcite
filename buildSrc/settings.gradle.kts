@@ -22,6 +22,16 @@ pluginManagement {
         idv("com.github.autostyle")
         idv("com.github.vlsi.gradle-extensions", "com.github.vlsi.vlsi-release-plugins")
     }
+    repositories {
+        maven {
+            isAllowInsecureProtocol = true
+            url = uri("https://maven.aliyun.com/repository/public/")
+        }
+        maven {
+            isAllowInsecureProtocol = true
+            url = uri("https://maven.aliyun.com/repository/gradle-plugin")
+        }
+    }
 }
 
 include("javacc")
