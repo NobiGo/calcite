@@ -286,6 +286,14 @@ class ServerTest {
     }
   }
 
+  @Test void testDropMaskFunction() throws Exception {
+    try (Connection c = connect();
+         Statement s = c.createStatement()) {
+      boolean b = s.execute("drop mask function test");
+//      assertThat(b, is(false));
+    }
+  }
+
   /** Test case for
    * <a href="https://issues.apache.org/jira/browse/CALCITE-3046">[CALCITE-3046]
    * CompileException when inserting casted value of composited user defined type
@@ -440,7 +448,7 @@ class ServerTest {
     }
   }
 
-  @Disabled("not working yet")
+//  @Disabled("not working yet")
   @Test void testStoredGeneratedColumn2() throws Exception {
     try (Connection c = connect();
          Statement s = c.createStatement()) {

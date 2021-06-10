@@ -119,6 +119,14 @@ public class SqlDdlNodes {
     return new SqlDropFunction(pos, ifExists, name);
   }
 
+  /**
+   * Create a drop mask function
+   */
+  public static SqlDrop dropMaskFunction(SqlParserPos pos,
+      boolean ifExists, SqlIdentifier name) {
+    return new SqlDropMaskFunction(pos, ifExists, name);
+  }
+
   /** Creates a column declaration. */
   public static SqlNode column(SqlParserPos pos, SqlIdentifier name,
       SqlDataTypeSpec dataType, SqlNode expression, ColumnStrategy strategy) {

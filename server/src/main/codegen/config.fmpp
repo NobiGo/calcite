@@ -44,6 +44,7 @@ data: {
       "JAR"
       "FILE"
       "ARCHIVE"
+      "MASK"
     ]
 
     # List of non-reserved keywords to add;
@@ -82,6 +83,7 @@ data: {
       "SqlDropType"
       "SqlDropView"
       "SqlDropFunction"
+      "SqlDropMaskFunction"
     ]
 
     # List of files in @includes directory that have parser method

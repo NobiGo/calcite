@@ -399,14 +399,26 @@ SqlDrop SqlDropMaterializedView(Span s, boolean replace) :
     }
 }
 
-SqlDrop SqlDropFunction(Span s, boolean replace) :
+SqlDrop SqlDropMaskFunction(Span s, boolean replace) :
 {
     final boolean ifExists;
     final SqlIdentifier id;
 }
 {
-    <FUNCTION> ifExists = IfExistsOpt()
+    <MASK> <FUNCTION> ifExists = IfExistsOpt()
     id = CompoundIdentifier() {
-        return SqlDdlNodes.dropFunction(s.end(this), ifExists, id);
+        return SqlDdlNodes.dropMaskFunction(s.end(this), ifExists, id);
     }
+}
+
+SqlDrop SqlDropFunction(Span s, boolean replace) :
+{
+   final boolean ifExists;
+   final SqlIdentifier id;
+}
+{
+   <FUNCTION> ifExists = IfExistsOpt()
+           id = CompoundIdentifier() {
+           return SqlDdlNodes.dropFunction(s.end(this), ifExists, id);
+  }
 }

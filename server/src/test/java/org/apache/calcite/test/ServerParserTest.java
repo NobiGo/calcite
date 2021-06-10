@@ -313,4 +313,10 @@ class ServerParserTest extends SqlParserTest {
     sql(sql).ok(expected);
   }
 
+  @Test void testDropMaskFunctionIfExists() {
+    final String sql = "drop mask function if exists \"my udf\"";
+    final String expected = "DROP MASK FUNCTION IF EXISTS `my udf`";
+    sql(sql).ok(expected);
+  }
+
 }

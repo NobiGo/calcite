@@ -332,6 +332,9 @@ public class ServerDdlExecutor extends DdlExecutorImpl {
             RESOURCE.functionNotFound(objectName));
       }
       break;
+    case DROP_MASK_FUNCTION:
+      System.out.println("Drop Mask Function Execute");
+      break;
     case OTHER_DDL:
     default:
       throw new AssertionError(drop.getKind());
