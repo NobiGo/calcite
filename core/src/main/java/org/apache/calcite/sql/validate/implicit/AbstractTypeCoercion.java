@@ -343,12 +343,12 @@ public abstract class AbstractTypeCoercion implements TypeCoercion {
       return factory.createTypeWithNullability(type1,
           type1.isNullable() || type2.isNullable());
     }
-    // If one type is with Null type name: returns the other.
+    // If one type is with Null type name: returns the other with nullable.
     if (SqlTypeUtil.isNull(type1)) {
-      return type2;
+      return factory.createTypeWithNullability(type2, true);
     }
     if (SqlTypeUtil.isNull(type2)) {
-      return type1;
+      return factory.createTypeWithNullability(type1, true);
     }
     RelDataType resultType = null;
     if (SqlTypeUtil.isString(type1)

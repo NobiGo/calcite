@@ -1120,11 +1120,7 @@ public class SqlToRelConverter {
     case ALL:
       call = (SqlBasicCall) subQuery.node;
       query = call.operand(1);
-      if (!config.isExpand() && !(query instanceof SqlNodeList)) {
-        return;
-      }
       final SqlNode leftKeyNode = call.operand(0);
-
       final List<RexNode> leftKeys;
       switch (leftKeyNode.getKind()) {
       case ROW:
@@ -1136,11 +1132,13 @@ public class SqlToRelConverter {
       default:
         leftKeys = ImmutableList.of(bb.convertExpression(leftKeyNode));
       }
+      if (!config.isExpand()) {
+        return;
+      }
 
       if (query instanceof SqlNodeList) {
         SqlNodeList valueList = (SqlNodeList) query;
-        if (!containsNullLiteral(valueList)
-            && valueList.size() < config.getInSubQueryThreshold()) {
+        if (valueList.size() < config.getInSubQueryThreshold()) {
           // We're under the threshold, so convert to OR.
           subQuery.expr =
               convertInToOr(
@@ -1150,10 +1148,17 @@ public class SqlToRelConverter {
                   (SqlInOperator) call.getOperator());
           return;
         }
-
-        // Otherwise, let convertExists translate
-        // values list into an inline table for the
-        // reference to Q below.
+        final SqlNodeList sqlNodeListValues = new SqlNodeList(SqlParserPos.ZERO);
+        valueList.forEach(valueL -> {
+              SqlNodeList sqlNodeListRowValue = new SqlNodeList(SqlParserPos.ZERO);
+              sqlNodeListRowValue.add(valueL);
+              final SqlCall sqlCall = SqlStdOperatorTable.ROW.createCall(sqlNodeListRowValue);
+              sqlNodeListValues.add(sqlCall);
+            }
+        );
+        call.setOperand(1, SqlStdOperatorTable.VALUES.createCall(sqlNodeListValues));
+        validator().validate(call.operand(1));
+        return;
       }
 
       // Project out the search columns from the left side

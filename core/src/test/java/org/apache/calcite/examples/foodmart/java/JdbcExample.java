@@ -47,10 +47,7 @@ public class JdbcExample {
     rootSchema.add("foodmart", new ReflectiveSchema(new Foodmart()));
     Statement statement = connection.createStatement();
     ResultSet resultSet =
-        statement.executeQuery("select *\n"
-            + "from \"foodmart\".\"sales_fact_1997\" as s\n"
-            + "join \"hr\".\"emps\" as e\n"
-            + "on e.\"empid\" = s.\"cust_id\"");
+        statement.executeQuery("select * from (values(null)) as table2");
     final StringBuilder buf = new StringBuilder();
     while (resultSet.next()) {
       int n = resultSet.getMetaData().getColumnCount();
