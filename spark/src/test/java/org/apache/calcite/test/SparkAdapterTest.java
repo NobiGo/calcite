@@ -55,16 +55,19 @@ class SparkAdapterTest {
     // Insert a spurious reference to a class in Calcite's Spark adapter.
     // Otherwise this test doesn't depend on the Spark module at all, and
     // Javadoc gets confused.
-    Util.discard(SparkRel.class);
+//    Util.discard(SparkRel.class);
 
     final String sql = "select *\n"
         + "from " + VALUES0;
 
     final String plan = "PLAN="
-        + "EnumerableValues(tuples=[[{ 1, 'a' }, { 2, 'b' }]])";
+        + "SparkToEnumerableConverter\n"
+        + "  SparkValues(tuples=[[{ 1, 'a' }, { 2, 'b' }]])\n";
 
     final String expectedResult = "EXPR$0=1; EXPR$1=a\n"
         + "EXPR$0=2; EXPR$1=b\n";
+    sql(sql).returns(expectedResult);
+
 
     sql(sql).returns(expectedResult)
         .explainContains(plan);

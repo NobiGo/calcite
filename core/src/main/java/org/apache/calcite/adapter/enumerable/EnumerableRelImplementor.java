@@ -206,18 +206,32 @@ public class EnumerableRelImplementor extends JavaRelImplementor {
 
     // Constructor:
     //   Foo(T0 f0, ...) { this.f0 = f0; ... }
-    final BlockBuilder blockBuilder = new BlockBuilder();
+    final BlockBuilder blockBuilderCons = new BlockBuilder();
     final List<ParameterExpression> parameters = new ArrayList<>();
     final ParameterExpression thisParameter =
         Expressions.parameter(type, "this");
 
-    // Here a constructor without parameter is used because the generated
-    // code could cause error if number of fields is too large.
+    for (Types.RecordField field : type.getRecordFields()) {
+      parameters.add(Expressions.parameter(field.getType(), field.getName()));
+      blockBuilderCons.add(Expressions.statement(Expressions.assign(Expressions.field(thisParameter, field.getName()),
+          Expressions.parameter(field.getType(), field.getName()))));
+    }
+
     classDeclaration.memberDeclarations.add(
         Expressions.constructorDecl(
             Modifier.PUBLIC,
             type,
             parameters,
+            blockBuilderCons.toBlock()));
+
+    // Here a constructor without parameter is used because the generated
+    // code could cause error if number of fields is too large.
+    final BlockBuilder blockBuilder = new BlockBuilder();
+    classDeclaration.memberDeclarations.add(
+        Expressions.constructorDecl(
+            Modifier.PUBLIC,
+            type,
+            new ArrayList<ParameterExpression>(),
             blockBuilder.toBlock()));
 
     // equals method():

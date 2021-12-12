@@ -32,6 +32,11 @@ import java.sql.Statement;
  * <p>Schema is specified programmatically.</p>
  */
 public class JdbcExample {
+
+  private static final String VALUES0 = "(values ROW(1, 'a'), ROW(2, 'b')) as tabl1";
+  final String sql = "select *\n"
+      + "from " + VALUES0;
+
   public static void main(String[] args) throws Exception {
     new JdbcExample().run();
   }
@@ -47,10 +52,7 @@ public class JdbcExample {
     rootSchema.add("foodmart", new ReflectiveSchema(new Foodmart()));
     Statement statement = connection.createStatement();
     ResultSet resultSet =
-        statement.executeQuery("select *\n"
-            + "from \"foodmart\".\"sales_fact_1997\" as s\n"
-            + "join \"hr\".\"emps\" as e\n"
-            + "on e.\"empid\" = s.\"cust_id\"");
+        statement.executeQuery(sql);
     final StringBuilder buf = new StringBuilder();
     while (resultSet.next()) {
       int n = resultSet.getMetaData().getColumnCount();

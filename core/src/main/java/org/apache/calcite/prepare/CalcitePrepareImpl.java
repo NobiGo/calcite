@@ -455,11 +455,11 @@ public class CalcitePrepareImpl implements CalcitePrepare {
       spark.registerRules(
           new SparkHandler.RuleSetBuilder() {
             @Override public void addRule(RelOptRule rule) {
-              // TODO:
+              planner.addRule(rule);
             }
 
             @Override public void removeRule(RelOptRule rule) {
-              // TODO:
+              planner.removeRule(rule);
             }
           });
     }

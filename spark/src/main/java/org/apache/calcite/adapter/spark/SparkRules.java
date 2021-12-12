@@ -17,12 +17,7 @@
 package org.apache.calcite.adapter.spark;
 
 import org.apache.calcite.DataContext;
-import org.apache.calcite.adapter.enumerable.EnumerableConvention;
-import org.apache.calcite.adapter.enumerable.JavaRowFormat;
-import org.apache.calcite.adapter.enumerable.PhysType;
-import org.apache.calcite.adapter.enumerable.PhysTypeImpl;
-import org.apache.calcite.adapter.enumerable.RexImpTable;
-import org.apache.calcite.adapter.enumerable.RexToLixTranslator;
+import org.apache.calcite.adapter.enumerable.*;
 import org.apache.calcite.adapter.java.JavaTypeFactory;
 import org.apache.calcite.linq4j.tree.BlockBuilder;
 import org.apache.calcite.linq4j.tree.BlockStatement;
@@ -109,8 +104,8 @@ public abstract class SparkRules {
     return ImmutableList.of(
         // TODO: add SparkProjectRule, SparkFilterRule, SparkProjectToCalcRule,
         // SparkFilterToCalcRule, and remove the following 2 rules.
-        CoreRules.PROJECT_TO_CALC,
-        CoreRules.FILTER_TO_CALC,
+//        CoreRules.PROJECT_TO_CALC,
+//        CoreRules.FILTER_TO_CALC,
         ENUMERABLE_TO_SPARK,
         SPARK_TO_ENUMERABLE,
         SPARK_VALUES_RULE,
@@ -211,7 +206,7 @@ public abstract class SparkRules {
       final PhysType physType =
           PhysTypeImpl.of(implementor.getTypeFactory(),
               getRowType(),
-              JavaRowFormat.CUSTOM);
+              EnumerableRel.Prefer.ARRAY.preferArray());
       final Type rowClass = physType.getJavaRowType();
 
       final List<Expression> expressions = new ArrayList<>();

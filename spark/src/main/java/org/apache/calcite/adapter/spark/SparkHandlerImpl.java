@@ -40,15 +40,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Implementation of
  * {@link org.apache.calcite.jdbc.CalcitePrepare.SparkHandler}. Gives the core
- * Calcite engine access to rules that only exist in the Spark module.
+ * Calcite engine access to rule that only exist in the Spark module.
  */
 public class SparkHandlerImpl implements CalcitePrepare.SparkHandler {
   private final HttpServer classServer;
   private final AtomicInteger classId;
-  private final SparkConf sparkConf =
-      new SparkConf().set("spark.driver.bindAddress", "localhost");
-  private final JavaSparkContext sparkContext =
-      new JavaSparkContext("local[1]", "calcite", sparkConf);
+  private final SparkConf sparkConf;
+  private final JavaSparkContext sparkContext;
 
   /** Thread-safe holder. */
   private static class Holder {
@@ -67,7 +65,12 @@ public class SparkHandlerImpl implements CalcitePrepare.SparkHandler {
     // Start the classServer and store its URI in a spark system property
     // (which will be passed to executors so that they can connect to it)
     classServer.start();
-    System.setProperty("spark.repl.class.uri", classServer.uri());
+//    System.setProperty("spark.repl.class.uri", classServer.uri());
+    sparkConf = new SparkConf()
+        .set("spark.driver.bindAddress", "localhost")
+        .set("spark.repl.class.uri", classServer.uri()+"/");
+    sparkContext =
+        new JavaSparkContext("local[1]", "calcite", sparkConf);
 
     // Generate a starting point for class names that is unlikely to clash with
     // previous classes. A better solution would be to clear the class directory
@@ -99,6 +102,8 @@ public class SparkHandlerImpl implements CalcitePrepare.SparkHandler {
       builder.addRule(rule);
     }
     builder.removeRule(EnumerableRules.ENUMERABLE_VALUES_RULE);
+    builder.removeRule(EnumerableRules.ENUMERABLE_CALC_RULE);
+    builder.removeRule(EnumerableRules.ENUMERABLE_FILTER_TO_CALC_RULE);
   }
 
   @Override public Object sparkContext() {

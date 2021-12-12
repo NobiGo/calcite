@@ -24,7 +24,7 @@
   </Appenders>
 
   <Loggers>
-    <Root level="INFO">
+    <Root level="DEBUG">
       <AppenderRef ref="A1"/>
     </Root>
     <!-- [CALCITE-2519] Silence ERROR logs from CalciteException, SqlValidatorException during tests -->
