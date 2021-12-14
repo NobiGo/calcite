@@ -25,6 +25,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -65,8 +66,8 @@ public abstract class SparkRuntime {
    *
    * @param <T> argument type
    * @param <R> result type */
-  public abstract static class CalciteFlatMapFunction<T, R>
-      implements FlatMapFunction<T, R>,
-      org.apache.calcite.linq4j.function.Function {
+  public interface CalciteFlatMapFunction<T, R>
+      extends org.apache.calcite.linq4j.function.Function<R>, FlatMapFunction<T, R> {
+    @Override Iterator<R> call(T t) throws Exception;
   }
 }

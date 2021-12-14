@@ -77,7 +77,7 @@ public class SparkToEnumerableConverter
     final PhysType physType =
         PhysTypeImpl.of(implementor.getTypeFactory(),
             getRowType(),
-            pref.preferCustom());
+            JavaRowFormat.CUSTOM);
     SparkRel.Implementor sparkImplementor =
         new SparkImplementorImpl(implementor);
     final SparkRel.Result result = child.implementSpark(sparkImplementor);

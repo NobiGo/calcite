@@ -313,6 +313,7 @@ public enum BuiltInMethod {
   COLLECTION_ADDALL(Collection.class, "addAll", Collection.class),
   COLLECTION_RETAIN_ALL(Collection.class, "retainAll", Collection.class),
   LIST_GET(List.class, "get", int.class),
+  LIST_ITERATOR(List.class, "iterator"),
   ITERATOR_HAS_NEXT(Iterator.class, "hasNext"),
   ITERATOR_NEXT(Iterator.class, "next"),
   MATH_MAX(Math.class, "max", int.class, int.class),

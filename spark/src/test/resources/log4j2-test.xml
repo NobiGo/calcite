@@ -24,13 +24,13 @@
   </Appenders>
 
   <Loggers>
-    <Root level="INFO">
+    <Root level="DEBUG">
       <AppenderRef ref="A1"/>
     </Root>
     <!-- Only report errors coming from Spark or its dependencies-->
-    <logger name="org.apache.spark" level="ERROR"/>
-    <logger name="org.spark_project" level="ERROR"/>
-    <logger name="org.apache.hadoop" level="ERROR"/>
-    <logger name="org.eclipse.jetty" level="ERROR"/>
+<!--    <logger name="org.apache.spark" level="INFO"/>-->
+<!--    <logger name="org.spark_project" level="INFO"/>-->
+<!--    <logger name="org.apache.hadoop" level="INFO"/>-->
+<!--    <logger name="org.eclipse.jetty" level="INFO"/>-->
   </Loggers>
 </Configuration>

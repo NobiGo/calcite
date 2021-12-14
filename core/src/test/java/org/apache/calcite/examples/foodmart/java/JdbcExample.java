@@ -34,8 +34,9 @@ import java.sql.Statement;
 public class JdbcExample {
 
   private static final String VALUES0 = "(values ROW(1, 'a'), ROW(2, 'b')) as tabl1";
-  final String sql = "select *\n"
-      + "from " + VALUES0;
+  final String sqlValues = "select *\n" + "from " + VALUES0;
+  private static final String VALUES1 = "(values (1, 'a'), (2, 'b')) as t(x, y)";
+  final String sqlFilter = "select *\n" + "from " + VALUES1 + "\n where x < 2";
 
   public static void main(String[] args) throws Exception {
     new JdbcExample().run();
@@ -52,7 +53,7 @@ public class JdbcExample {
     rootSchema.add("foodmart", new ReflectiveSchema(new Foodmart()));
     Statement statement = connection.createStatement();
     ResultSet resultSet =
-        statement.executeQuery(sql);
+        statement.executeQuery(sqlFilter);
     final StringBuilder buf = new StringBuilder();
     while (resultSet.next()) {
       int n = resultSet.getMetaData().getColumnCount();

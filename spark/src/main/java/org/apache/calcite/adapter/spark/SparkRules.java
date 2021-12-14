@@ -38,10 +38,12 @@ import org.apache.calcite.rel.SingleRel;
 import org.apache.calcite.rel.convert.ConverterRule;
 import org.apache.calcite.rel.core.Values;
 import org.apache.calcite.rel.logical.LogicalCalc;
+import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalValues;
 import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.rules.CoreRules;
+import org.apache.calcite.rel.rules.FilterToCalcRule;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexLiteral;
@@ -66,12 +68,10 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import scala.Tuple2;
 
 import java.lang.reflect.Type;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Random;
+import java.util.*;
+
+import static org.apache.calcite.rel.rules.CoreRules.FILTER_TO_CALC;
+import static org.apache.calcite.rel.rules.CoreRules.PROJECT_TO_CALC;
 
 /**
  * Rules for the {@link SparkRel#CONVENTION Spark calling convention}.
@@ -109,7 +109,9 @@ public abstract class SparkRules {
         ENUMERABLE_TO_SPARK,
         SPARK_TO_ENUMERABLE,
         SPARK_VALUES_RULE,
-        SPARK_CALC_RULE);
+        SPARK_CALC_RULE,
+        FILTER_TO_CALC,
+        PROJECT_TO_CALC);
   }
 
   /** Planner rule that converts from enumerable to Spark convention.
@@ -206,7 +208,7 @@ public abstract class SparkRules {
       final PhysType physType =
           PhysTypeImpl.of(implementor.getTypeFactory(),
               getRowType(),
-              EnumerableRel.Prefer.ARRAY.preferArray());
+              JavaRowFormat.CUSTOM);
       final Type rowClass = physType.getJavaRowType();
 
       final List<Expression> expressions = new ArrayList<>();
@@ -376,8 +378,8 @@ public abstract class SparkRules {
             Expressions.ifThen(
                 Expressions.not(condition),
                 Expressions.return_(null,
-                    Expressions.call(
-                        BuiltInMethod.COLLECTIONS_EMPTY_LIST.method))));
+                    Expressions.call(Expressions.call(BuiltInMethod.COLLECTIONS_EMPTY_LIST.method)
+                        , BuiltInMethod.LIST_ITERATOR.method))));
       }
 
       final SqlConformance conformance = SqlConformanceEnum.DEFAULT;
@@ -395,10 +397,10 @@ public abstract class SparkRules {
       builder2.add(
           Expressions.return_(null,
               Expressions.convert_(
-                  Expressions.call(
+                  Expressions.call(Expressions.call(
                       BuiltInMethod.COLLECTIONS_SINGLETON_LIST.method,
-                      physType.record(expressions)),
-                  List.class)));
+                      physType.record(expressions)),BuiltInMethod.LIST_ITERATOR.method),
+                  Iterator.class)));
 
       final BlockStatement callBody = builder2.toBlock();
       builder.add(

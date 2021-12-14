@@ -104,6 +104,9 @@ public class SparkHandlerImpl implements CalcitePrepare.SparkHandler {
     builder.removeRule(EnumerableRules.ENUMERABLE_VALUES_RULE);
     builder.removeRule(EnumerableRules.ENUMERABLE_CALC_RULE);
     builder.removeRule(EnumerableRules.ENUMERABLE_FILTER_TO_CALC_RULE);
+    builder.removeRule(EnumerableRules.ENUMERABLE_FILTER_RULE);
+    builder.removeRule(EnumerableRules.ENUMERABLE_PROJECT_RULE);
+    builder.removeRule(EnumerableRules.ENUMERABLE_PROJECT_TO_CALC_RULE);
   }
 
   @Override public Object sparkContext() {

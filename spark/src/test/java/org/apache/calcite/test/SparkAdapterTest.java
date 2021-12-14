@@ -82,8 +82,9 @@ class SparkAdapterTest {
     final String expectedResult = "X=1; Y=a\n";
 
     final String plan = "PLAN="
-        + "EnumerableCalc(expr#0..1=[{inputs}], expr#2=[2], expr#3=[<($t0, $t2)], proj#0..1=[{exprs}], $condition=[$t3])\n"
-        + "  EnumerableValues(tuples=[[{ 1, 'a' }, { 2, 'b' }]])\n";
+        + "SparkToEnumerableConverter\n"
+        + "  SparkCalc(expr#0..1=[{inputs}], expr#2=[2], expr#3=[<($t0, $t2)], proj#0..1=[{exprs}], $condition=[$t3])\n"
+        + "    SparkValues(tuples=[[{ 1, 'a' }, { 2, 'b' }]])\n";
 
     sql(sql).returns(expectedResult)
         .explainContains(plan);
