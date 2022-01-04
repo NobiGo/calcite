@@ -34,6 +34,9 @@ repositories {
         isAllowInsecureProtocol = true
         url = uri("https://maven.aliyun.com/repository/gradle-plugin")
     }
+    maven {
+        url = uri("http://af.hikvision.com.cn:80/artifactory/maven-down/")
+    }
 }
 
 val skipAutostyle by props()
