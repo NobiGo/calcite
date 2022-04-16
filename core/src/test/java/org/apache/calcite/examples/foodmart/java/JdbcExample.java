@@ -47,10 +47,24 @@ public class JdbcExample {
     rootSchema.add("foodmart", new ReflectiveSchema(new Foodmart()));
     Statement statement = connection.createStatement();
     ResultSet resultSet =
-        statement.executeQuery("select *\n"
+        statement.executeQuery(
+//            where (e."empid"=s."cust_id" and 1=2)
+            "select *\n"
             + "from \"foodmart\".\"sales_fact_1997\" as s\n"
-            + "join \"hr\".\"emps\" as e\n"
-            + "on e.\"empid\" = s.\"cust_id\"");
+            + "where s.\"cust_id\" in (select count(*) from \"hr\".\"emps\" as e where e.\"empid\"=s.\"cust_id\" and 1=2)");
+
+//                "select s.\"long_cust_id\", s.\"long_cust_id\" in (select count(*) from " +
+//                "\"hr\".\"emps\" as e where (e.\"empid\"=s.\"cust_id\" and 1=2)) from " +
+//                "\"foodmart\".\"sales_fact_1997\" as s where s.\"long_cust_id\"<>0" +
+//                " union all " +
+//                "select table2,TRUE from (select s.\"long_cust_id\" as table2, (select count(*) from \"hr\".\"emps\" as e" +
+//                " where (e.\"empid\"=s.\"cust_id\" and 1=2)) as value1 from \"foodmart\".\"sales_fact_1997\"" +
+//                " as s where s.\"long_cust_id\"=0) where value1 = 0");
+
+//            "select s.\"long_cust_id\", s.\"long_cust_id\" in (select count(*) from \"hr\"" +
+//                ".\"emps\" as e where (e.\"empid\"=s.\"cust_id\" and 1=2)) from \"foodmart\"" +
+//                ".\"sales_fact_1997\" as s "
+
     final StringBuilder buf = new StringBuilder();
     while (resultSet.next()) {
       int n = resultSet.getMetaData().getColumnCount();
@@ -92,8 +106,9 @@ public class JdbcExample {
    * schema. */
   public static class Foodmart {
     public final SalesFact[] sales_fact_1997 = {
-        new SalesFact(100, 10),
-        new SalesFact(150, 20),
+        new SalesFact(100, 100,10),
+        new SalesFact(150, 150,20),
+        new SalesFact(0, 0,20),
     };
   }
 
@@ -102,10 +117,12 @@ public class JdbcExample {
    * "sales_fact_1997" fact table. */
   public static class SalesFact {
     public final int cust_id;
+    public final long long_cust_id;
     public final int prod_id;
 
-    public SalesFact(int cust_id, int prod_id) {
+    public SalesFact(int cust_id,long long_cust_id, int prod_id) {
       this.cust_id = cust_id;
+      this.long_cust_id = long_cust_id;
       this.prod_id = prod_id;
     }
   }

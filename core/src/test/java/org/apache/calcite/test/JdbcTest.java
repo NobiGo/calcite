@@ -1152,6 +1152,19 @@ public class JdbcTest {
             CalciteAssert.checkResultContains("EnumerableCorrelate"));
   }
 
+
+  @Test void testExplainAllAttributesSemiJoinUnionCorrelate2() {
+    final String sql = "select * from depts where exists " +
+        "(select sum(empno) from emps where depts.deptno = emps.deptno and 1=2) ";
+    CalciteAssert.that()
+        .with(CalciteConnectionProperty.LEX, Lex.JAVA)
+        .with(CalciteConnectionProperty.FORCE_DECORRELATE, false)
+        .withSchema("s", new ReflectiveSchema(new HrSchema()))
+        .query(sql)
+        .returns("dafdasf");
+  }
+
+
   /** Just short of bushy. */
   @Test void testAlmostBushy() {
     CalciteAssert.that()

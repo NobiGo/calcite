@@ -3383,4 +3383,8 @@ EnumerableCalc(expr#0..12=[{inputs}], expr#13=[IS NOT TRUE($t12)], expr#14=[IS N
         EnumerableValues(tuples=[[{ 7369, 20 }, { 7499, 30 }]])
 !plan
 
+# [CALCITE-1583] Wrong results for query with correlated subqueries with aggregate subquery expression
+
+# Optmize the Exists subquery
+
 # End sub-query.iq

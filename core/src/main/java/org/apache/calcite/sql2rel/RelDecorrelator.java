@@ -1861,27 +1861,28 @@ public class RelDecorrelator implements ReflectiveVisitor {
 
   /**
    * Rule to remove an Aggregate with SINGLE_VALUE. For cases like:
-   *
+   *<pre>{@code
    * Aggregate(SINGLE_VALUE)
    *   Project(single expression)
    *     Aggregate
-   *
+   * }</pre>
    * For instance (subtree taken from TPCH query 17):
-   *
+   *<pre>{@code
    * LogicalAggregate(group=[{}], agg#0=[SINGLE_VALUE($0)])
    *   LogicalProject(EXPR$0=[*(0.2:DECIMAL(2, 1), $0)])
    *     LogicalAggregate(group=[{}], agg#0=[AVG($0)])
    *       LogicalProject(L_QUANTITY=[$4])
    *         LogicalFilter(condition=[=($1, $cor0.P_PARTKEY)])
    *           LogicalTableScan(table=[[TPCH_01, LINEITEM]])
-   *
+   *}</pre>
    * Will be converted into:
-   *
+   *<pre>{@code
    * LogicalProject($f0=[*(0.2:DECIMAL(2, 1), $0)])
    *   LogicalAggregate(group=[{}], agg#0=[AVG($0)])
    *     LogicalProject(L_QUANTITY=[$4])
    *       LogicalFilter(condition=[=($1, $cor0.P_PARTKEY)])
    *         LogicalTableScan(table=[[TPCH_01, LINEITEM]])
+   *</pre>
    */
   public static final class RemoveSingleAggregateRule
       extends RelRule<RemoveSingleAggregateRule.RemoveSingleAggregateRuleConfig> {
