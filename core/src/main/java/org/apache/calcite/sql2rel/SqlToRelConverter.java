@@ -1933,6 +1933,13 @@ public class SqlToRelConverter {
       Blackboard bb,
       RelDataType rowType,
       int iField) {
+    // CAST(NULL AS INTEGER)
+    if (sqlNode instanceof SqlBasicCall) {
+      SqlBasicCall sqlCall = (SqlBasicCall) sqlNode;
+      if (sqlCall.getOperator() == SqlStdOperatorTable.CAST) {
+        sqlNode = sqlCall.getOperandList().get(0);
+      }
+    }
     if (!(sqlNode instanceof SqlLiteral)) {
       return null;
     }
