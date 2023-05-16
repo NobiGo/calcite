@@ -905,6 +905,104 @@ class RelToSqlConverterTest {
         .withPresto().ok(expectedPresto);
   }
 
+  @Test void testSubQueryWithSingleValue1() {
+    final String query = "select \"product_class_id\" as c\n"
+        + "from \"product\" where  \"net_weight\" > (select \"product_class_id\" from \"product\")";
+    final String expectedMysql = "SELECT `product`.`product_class_id` AS `C`\n"
+  +
+        "FROM `foodmart`.`product`\n"
+  +
+        "LEFT JOIN (SELECT CASE COUNT(`product_class_id`) " +
+        "WHEN 0 THEN NULL WHEN 1 THEN `product_class_id` ELSE (SELECT NULL\n"
+  +
+        "UNION ALL\n"
+  +
+        "SELECT NULL) END AS `$f0`\n"
+  +
+        "FROM `foodmart`.`product`) AS `t0` ON TRUE\n"
+  +
+        "WHERE `product`.`net_weight` > `t0`.`$f0`";
+    final String expectedPostgresql = "SELECT \"product\".\"product_class_id\" AS \"C\" " +
+        " FROM \"foodmart\".\"product\" " +
+        "LEFT JOIN (SELECT SINGLE_VALUE(\"product_class_id\") AS \"$f0\" " +
+        "FROM \"foodmart\".\"product\") AS \"t0\" ON TRUE " +
+        "WHERE \"product\".\"net_weight\" > \"t0\".\"$f0\"";
+    sql(query)
+        .withConfig(c -> c.withExpand(true))
+        .withMysql().ok(expectedMysql)
+        .withPostgresql().ok(expectedPostgresql);
+  }
+
+  @Test void testSubQueryWithSingleValue2() {
+    final String query = "select \"product_class_id\" as c\n"
+        + "from \"product\" where  \"brand_name\" = (select \"product_name\" from \"product\")";
+    final String expectedPostgresql = "SELECT \"product\".\"product_class_id\" AS \"C\"\n"
+  +
+        "FROM \"foodmart\".\"product\"\n"
+  +
+        "LEFT JOIN (SELECT CASE COUNT(\"product_name\") WHEN 0 THEN NULL WHEN 1 THEN \"product_name\" ELSE (SELECT CAST(NULL AS VARCHAR(60))\n"
+  +
+        "UNION ALL\n"
+  +
+        "SELECT CAST(NULL AS VARCHAR(60))) END AS \"$f0\"\n"
+  +
+        "FROM \"foodmart\".\"product\") AS \"t0\" ON TRUE\n"
+  +
+        "WHERE \"product\".\"brand_name\" = \"t0\".\"$f0\"";
+    final String expectedOracle =
+        "SELECT \"product\".\"product_class_id\" \"C\"\n"
+  +
+            "FROM \"foodmart\".\"product\"\n"
+  +
+            "LEFT JOIN (SELECT CASE COUNT(\"product_name\") WHEN 0 THEN NULL WHEN 1 THEN \"product_name\" ELSE (SELECT CAST(NULL AS VARCHAR(60))\n"
+  +
+            "FROM \"DUAL\"\n"
+  +
+            "UNION ALL\n"
+  +
+            "SELECT CAST(NULL AS VARCHAR(60))\n"
+  +
+            "FROM \"DUAL\") END \"$f0\"\n"
+  +
+            "FROM \"foodmart\".\"product\") \"t0\" ON TRUE\n"
+  +
+            "WHERE \"product\".\"brand_name\" = \"t0\".\"$f0\"";
+    final String expectedHsql =
+        "SELECT product.product_class_id AS C\n"
+  +
+            "FROM foodmart.product\n"
+  +
+            "LEFT JOIN (SELECT CASE COUNT(product_name) WHEN 0 THEN NULL WHEN 1 THEN MIN(product_name) ELSE ((VALUES 0E0)\n"
+  +
+            "UNION ALL\n"
+  +
+            "(VALUES 0E0)) END AS $f0\n"
+  +
+            "FROM foodmart.product) AS t0 ON TRUE\n"
+  +
+            "WHERE product.brand_name = t0.$f0";
+    final String expectedMysql =
+        "SELECT `product`.`product_class_id` AS `C`\n"
+  +
+            "FROM `foodmart`.`product`\n"
+  +
+            "LEFT JOIN (SELECT CASE COUNT(`product_name`) WHEN 0 THEN NULL WHEN 1 THEN `product_name` ELSE (SELECT NULL\n"
+  +
+            "UNION ALL\n"
+  +
+            "SELECT NULL) END AS `$f0`\n"
+  +
+            "FROM `foodmart`.`product`) AS `t0` ON TRUE\n"
+  +
+            "WHERE `product`.`brand_name` = `t0`.`$f0`";
+    sql(query)
+        .withConfig(c -> c.withExpand(true))
+        .withHsqldb().ok(expectedHsql)
+        .withMysql().ok(expectedMysql)
+        .withOracle().ok(expectedOracle)
+        .withPostgresql().ok(expectedPostgresql);
+  }
+
   /**
    * Test case for
    * <a href="https://issues.apache.org/jira/browse/CALCITE-5530">[CALCITE-5530]

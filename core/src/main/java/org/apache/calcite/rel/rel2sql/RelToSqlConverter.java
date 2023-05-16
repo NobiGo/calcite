@@ -560,8 +560,9 @@ public class RelToSqlConverter extends SqlImplementor
       List<SqlNode> selectList, List<SqlNode> groupByList) {
     for (AggregateCall aggCall : e.getAggCallList()) {
       SqlNode aggCallSqlNode = builder.context.toSql(aggCall);
+      RelDataType relDataType = aggCall.getType();
       if (aggCall.getAggregation() instanceof SqlSingleValueAggFunction) {
-        aggCallSqlNode = dialect.rewriteSingleValueExpr(aggCallSqlNode);
+        aggCallSqlNode = dialect.rewriteSingleValueExpr(aggCallSqlNode, relDataType);
       }
       addSelect(selectList, aggCallSqlNode, e.getRowType());
     }
