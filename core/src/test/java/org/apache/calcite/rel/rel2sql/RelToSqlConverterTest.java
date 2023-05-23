@@ -3451,6 +3451,73 @@ class RelToSqlConverterTest {
     String expected = "SELECT \"product_name\"\n"
         + "FROM \"foodmart\".\"product\"\n"
         + "WHERE \"product_id\" = 1 OR \"product_id\" = 2";
+    sql(query).withConfig(c -> c.withExpand(false)).ok(expected);
+  }
+
+  @Test void testSubQueryNotInWithExpand() {
+    String query = "select \"product_name\" from \"product\" a "
+        + "where \"product_id\" not in (select \"product_id\" "
+        + "from \"sales_fact_1997\"b "
+        + "where b.\"product_id\" = a.\"product_id\")";
+    String expected = "SELECT \"product_name\"\n"
+        + "FROM \"foodmart\".\"product\"\n"
+        + "WHERE \"product_id\" NOT IN (SELECT \"product_id\"\n"
+        + "FROM \"foodmart\".\"sales_fact_1997\"\n"
+        + "WHERE \"product_id\" = \"product\".\"product_id\")";
+    sql(query).withConfig(c -> c.withExpand(false)).ok(expected);
+  }
+
+  /** Test case for
+   * <a href="https://issues.apache.org/jira/browse/CALCITE-5711">[CALCITE-5711]
+   * Implement the SINGLE_VALUE aggregation in PostgreSQL Dialect</a>. */
+  @Test void testSubQueryWithSingleValue() {
+    final String query = "select \"product_class_id\" as c\n"
+        + "from \"product\" where  \"net_weight\" > (select \"product_class_id\" from \"product\")";
+    final String expectedMysql = "SELECT `product`.`product_class_id` AS `C`\n"
+        + "FROM `foodmart`.`product`\n"
+        + "LEFT JOIN (SELECT CASE COUNT(`product_class_id`) "
+        + "WHEN 0 THEN NULL WHEN 1 THEN `product_class_id` ELSE (SELECT NULL\n"
+        + "UNION ALL\n"
+        + "SELECT NULL) END AS `$f0`\n"
+        + "FROM `foodmart`.`product`) AS `t0` ON TRUE\n"
+        + "WHERE `product`.`net_weight` > `t0`.`$f0`";
+    final String expectedPostgresql = "SELECT \"product\".\"product_class_id\" AS \"C\"\n"
+        + "FROM \"foodmart\".\"product\"\n"
+        + "LEFT JOIN (SELECT CASE COUNT(\"product_class_id\") WHEN 0 THEN NULL WHEN 1 THEN MIN(\"product_class_id\") ELSE (SELECT CAST(NULL AS INTEGER)\n"
+        + "UNION ALL\n"
+        + "SELECT CAST(NULL AS INTEGER)) END AS \"$f0\"\n"
+        + "FROM \"foodmart\".\"product\") AS \"t0\" ON TRUE\n"
+        + "WHERE \"product\".\"net_weight\" > \"t0\".\"$f0\"";
+    sql(query)
+        .withConfig(c -> c.withExpand(true))
+        .withMysql().ok(expectedMysql)
+        .withPostgresql().ok(expectedPostgresql);
+  }
+
+  @Test void testLike() {
+    String query = "select \"product_name\" from \"product\" a "
+        + "where \"product_name\" like 'abc'";
+    String expected = "SELECT \"product_name\"\n"
+        + "FROM \"foodmart\".\"product\"\n"
+        + "WHERE \"product_name\" LIKE 'abc'";
+    sql(query).ok(expected);
+  }
+
+  @Test void testNotLike() {
+    String query = "select \"product_name\" from \"product\" a "
+        + "where \"product_name\" not like 'abc'";
+    String expected = "SELECT \"product_name\"\n"
+        + "FROM \"foodmart\".\"product\"\n"
+        + "WHERE \"product_name\" NOT LIKE 'abc'";
+    sql(query).ok(expected);
+  }
+
+  @Test void testIlike() {
+    String query = "select \"product_name\" from \"product\" a "
+        + "where \"product_name\" ilike 'abC'";
+    String expected = "SELECT \"product_name\"\n"
+        + "FROM \"foodmart\".\"product\"\n"
+        + "WHERE \"product_id\" = 1 OR \"product_id\" = 2";
     sql(query).config(NO_EXPAND_CONFIG).ok(expected);
   }
 
