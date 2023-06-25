@@ -16,8 +16,27 @@
 # limitations under the License.
 #
 !use post
-values 1;
-EXPR$0
-1
+!set outputformat mysql
+# same as above, but expressed as a nestedLoop-join
+select * from (select * from emp where gender ='F') as emp full join dept on emp.deptno - dept.deptno = 0;
++-------+--------+--------+---------+-------------+
+| ENAME | DEPTNO | GENDER | DEPTNO0 | DNAME       |
++-------+--------+--------+---------+-------------+
+| Jane  |     10 | F      |      10 | Sales       |
+| Susan |     30 | F      |      30 | Engineering |
+| Alice |     30 | F      |      30 | Engineering |
+| Eve   |     50 | F      |         |             |
+| Grace |     60 | F      |         |             |
+| Wilma |        | F      |         |             |
+|       |        |        |      20 | Marketing   |
+|       |        |        |      40 | Empty       |
++-------+--------+--------+---------+-------------+
+(8 rows)
+
 !ok
+EnumerableNestedLoopJoin(condition=[=(-($1, $3), 0)], joinType=[full])
+  EnumerableCalc(expr#0..2=[{inputs}], expr#3=['F'], expr#4=[=($t2, $t3)], proj#0..2=[{exprs}], $condition=[$t4])
+    EnumerableValues(tuples=[[{ 'Jane', 10, 'F' }, { 'Bob', 10, 'M' }, { 'Eric', 20, 'M' }, { 'Susan', 30, 'F' }, { 'Alice', 30, 'F' }, { 'Adam', 50, 'M' }, { 'Eve', 50, 'F' }, { 'Grace', 60, 'F' }, { 'Wilma', null, 'F' }]])
+  EnumerableValues(tuples=[[{ 10, 'Sales      ' }, { 20, 'Marketing  ' }, { 30, 'Engineering' }, { 40, 'Empty      ' }]])
+!plan
 # End dummy.iq

@@ -1896,6 +1896,12 @@ public class SqlToRelConverter {
                 bb,
                 rowType,
                 0);
+        while (rexLiteral == null) {
+          while (node instanceof SqlCall && ((SqlCall) node).getOperator() == SqlStdOperatorTable.CAST) {
+            node = ((SqlCall) node).getOperandList().get(0);
+            rexLiteral = convertLiteralInValuesList(node, bb, rowType, 0);
+          }
+        }
         if ((rexLiteral != null) && config.isCreateValuesRel()) {
           tupleList.add(ImmutableList.of(rexLiteral));
           continue;
