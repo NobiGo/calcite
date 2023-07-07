@@ -15,11 +15,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-!use post
+!set insubquerythreshold 0
+!use scott
 !set outputformat mysql
-SELECT deptno
-FROM emp AS e
-WHERE cast(e.deptno as bigint) in (130, 131, 132, 133, 134);
-EnumerableCalc(expr#0=[{inputs}], expr#1=[CAST($t0):BIGINT], expr#2=[Sarg[130L:BIGINT, 131L:BIGINT, 132L:BIGINT, 133L:BIGINT, 134L:BIGINT]:BIGINT], expr#3=[SEARCH($t1, $t2)], DEPTNO=[$t0], $condition=[$t3])
-  EnumerableValues(tuples=[[{ 10 }, { 10 }, { 20 }, { 30 }, { 30 }, { 50 }, { 50 }, { 60 }, { null }]])
+#SELECT deptno
+#FROM emp AS e
+#WHERE cast(e.deptno as bigint) in (130, 131, 132, 133, 134);
+#EnumerableCalc(expr#0=[{inputs}], expr#1=[CAST($t0):BIGINT], expr#2=[Sarg[130L:BIGINT, 131L:BIGINT, 132L:BIGINT, 133L:BIGINT, 134L:BIGINT]:BIGINT], expr#3=[SEARCH($t1, $t2)], DEPTNO=[$t0], $condition=[$t3])
+#  EnumerableValues(tuples=[[{ 10 }, { 10 }, { 20 }, { 30 }, { 30 }, { 50 }, { 50 }, { 60 }, { null }]])
+#!plan
+
+select * from "scott".emp where (empno, deptno) not in ((1, 2), (3, null));
+EnumerableCalc(expr#0..14=[{inputs}], expr#15=[0:BIGINT], expr#16=[=($t8, $t15)], expr#17=[IS NULL($t14)], expr#18=[>=($t9, $t8)], expr#19=[IS NOT NULL($t11)], expr#20=[AND($t17, $t18, $t19)], expr#21=[OR($t16, $t20)], proj#0..7=[{exprs}], $condition=[$t21])
+  EnumerableMergeJoin(condition=[AND(=($10, $12), =($11, $13))], joinType=[left])
+    EnumerableSort(sort0=[$10], sort1=[$11], dir0=[ASC], dir1=[ASC])
+      EnumerableCalc(expr#0..9=[{inputs}], expr#10=[CAST($t0):INTEGER NOT NULL], expr#11=[CAST($t7):INTEGER], proj#0..11=[{exprs}])
+        EnumerableNestedLoopJoin(condition=[true], joinType=[inner])
+          EnumerableTableScan(table=[[scott, EMP]])
+          EnumerableAggregate(group=[{}], agg#0=[COUNT()], agg#1=[COUNT($1)])
+            EnumerableUnion(all=[true])
+              EnumerableValues(tuples=[[{ 3, null }]])
+              EnumerableValues(tuples=[[{ 1, 2 }]])
+    EnumerableSort(sort0=[$0], sort1=[$1], dir0=[ASC], dir1=[ASC])
+      EnumerableAggregate(group=[{0, 1}], agg#0=[MIN($2)])
+        EnumerableCalc(expr#0..1=[{inputs}], expr#2=[true], proj#0..2=[{exprs}])
+          EnumerableUnion(all=[true])
+            EnumerableValues(tuples=[[{ 3, null }]])
+            EnumerableValues(tuples=[[{ 1, 2 }]])
 !plan
+
+
+#     EnumerableCalc(expr#0..1=[{inputs}], expr#2=[true], proj#0..2=[{exprs}])
+#       EnumerableValues(tuples=[[{ 1, 2 }, { 3, null }]])
