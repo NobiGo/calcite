@@ -43,6 +43,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+import static org.apache.calcite.linq4j.Nullness.castNonNull;
+import static org.apache.calcite.sql.type.SqlTypeUtil.isMeasure;
 import static org.apache.calcite.util.Static.RESOURCE;
 
 /**
@@ -485,6 +487,26 @@ public abstract class SqlOperator {
             + opBinding.getOperator() + "; operand types: "
             + opBinding.collectOperandTypes());
       }
+
+      // MEASURE wrapper should be removed, e.g. MEASURE<DOUBLE> should just be DOUBLE
+      if (isMeasure(returnType) && returnType.getMeasureElementType() != null) {
+        returnType = Objects.requireNonNull(returnType.getMeasureElementType());
+      }
+
+      if (operandTypeInference != null
+          && opBinding instanceof SqlCallBinding
+          && this instanceof SqlFunction) {
+        final SqlCallBinding callBinding = (SqlCallBinding) opBinding;
+        final List<RelDataType> operandTypes = opBinding.collectOperandTypes();
+        if (operandTypes.stream().anyMatch(t -> t.getSqlTypeName() == SqlTypeName.ANY)) {
+          final RelDataType[] operandTypes2 = operandTypes.toArray(new RelDataType[0]);
+          operandTypeInference.inferOperandTypes(callBinding, returnType, operandTypes2);
+          ((SqlValidatorImpl) callBinding.getValidator())
+              .callToOperandTypesMap
+              .put(callBinding.getCall(), ImmutableList.copyOf(operandTypes2));
+        }
+      }
+
       return returnType;
     }
 

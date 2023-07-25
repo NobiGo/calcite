@@ -724,6 +724,10 @@ public abstract class SqlTypeUtil {
     return t.getFamily() == SqlTypeFamily.ANY;
   }
 
+  public static boolean isMeasure(RelDataType t) {
+    return t instanceof MeasureSqlType;
+  }
+
   /**
    * Tests whether a value can be assigned to a site.
    *
