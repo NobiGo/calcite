@@ -12225,7 +12225,7 @@ LogicalProject(EXPR$0=[3], EXPR$1=[22], EXPR$2=[26], EXPR$3=[null:INTEGER], EXPR
   <TestCase name="testReduceConstants2">
     <Resource name="sql">
       <![CDATA[select p1 is not distinct from p0
-from (values (2, cast(null as integer))) as t(p0, p1)]]>
+from (values (2, cast(null as integer)),(3, cast(null as integer))) as t(p0, p1)]]>
     </Resource>
     <Resource name="planBefore">
       <![CDATA[

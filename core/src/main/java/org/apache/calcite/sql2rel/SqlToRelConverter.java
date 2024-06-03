@@ -144,6 +144,7 @@ import org.apache.calcite.sql.SqlWindow;
 import org.apache.calcite.sql.SqlWith;
 import org.apache.calcite.sql.SqlWithItem;
 import org.apache.calcite.sql.fun.SqlCase;
+import org.apache.calcite.sql.fun.SqlCastFunction;
 import org.apache.calcite.sql.fun.SqlInOperator;
 import org.apache.calcite.sql.fun.SqlQuantifyOperator;
 import org.apache.calcite.sql.fun.SqlRowOperator;
@@ -1946,11 +1947,19 @@ public class SqlToRelConverter {
       Blackboard bb,
       RelDataType rowType,
       int iField) {
+    RelDataTypeField field = rowType.getFieldList().get(iField);
+    RelDataType type = field.getType();
+
+//    if (sqlNode instanceof SqlBasicCall && ((SqlCall) sqlNode).getOperator().getKind() ==
+//        SqlKind.CAST) {
+//      RexNode rexNode = exprConverter.convertCall(bb, (SqlCall) sqlNode);
+//      if(rexNode instanceof RexLiteral && rexNode.getType() == type)
+//        return (RexLiteral) rexNode;
+//    }
+
     if (!(sqlNode instanceof SqlLiteral)) {
       return null;
     }
-    RelDataTypeField field = rowType.getFieldList().get(iField);
-    RelDataType type = field.getType();
     if (type.isStruct()) {
       // null literals for weird stuff like UDT's need
       // special handling during type flattening, so
