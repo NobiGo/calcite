@@ -33,6 +33,7 @@ import org.apache.calcite.util.RelToSqlConverterUtil;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import static org.apache.calcite.util.RelToSqlConverterUtil.rewriteSparkSingleValue;
 import static org.apache.calcite.util.RelToSqlConverterUtil.unparseSparkArrayAndMap;
 
 /**
@@ -41,6 +42,7 @@ import static org.apache.calcite.util.RelToSqlConverterUtil.unparseSparkArrayAnd
 public class HiveSqlDialect extends SqlDialect {
   public static final SqlDialect.Context DEFAULT_CONTEXT = SqlDialect.EMPTY_CONTEXT
       .withDatabaseProduct(SqlDialect.DatabaseProduct.HIVE)
+      .withIdentifierQuoteString("`")
       .withNullCollation(NullCollation.LOW);
 
   public static final SqlDialect DEFAULT = new HiveSqlDialect(DEFAULT_CONTEXT);
@@ -153,5 +155,9 @@ public class HiveSqlDialect extends SqlDialect {
       }
     }
     return super.getCastSpec(type);
+  }
+
+  @Override public SqlNode rewriteSingleValueExpr(SqlNode aggCall, RelDataType relDataType) {
+    return rewriteSparkSingleValue(aggCall);
   }
 }
