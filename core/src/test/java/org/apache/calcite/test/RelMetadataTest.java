@@ -2518,6 +2518,15 @@ public class RelMetadataTest {
         sortsAs("[<($0, 10), =($3, 'y'), =($4, 1), IS NULL($1), IS NULL($2)]"));
   }
 
+  @Test void testPullUpPredicatesFromProject() {
+    final String sql = "select MGR, MGR as manager, MGR as manager1 from (select * from emp where MGR = 0)";
+    final RelNode rel = sql(sql).toRel();
+    final RelMetadataQuery mq = rel.getCluster().getMetadataQuery();
+    RelOptPredicateList inputSet = mq.getPulledUpPredicates(rel);
+    ImmutableList<RexNode> pulledUpPredicates = inputSet.pulledUpPredicates;
+    assertThat(pulledUpPredicates, sortsAs("[=($0, 0), =($1, 0), =($2, 0)]"));
+  }
+
   @Test void testPullUpPredicatesOnNullableConstant() {
     final String sql = "select nullif(1, 1) as c\n"
         + "  from emp\n"
