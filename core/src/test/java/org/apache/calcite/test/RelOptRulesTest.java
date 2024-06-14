@@ -5020,6 +5020,19 @@ class RelOptRulesTest extends RelOptTestBase {
         .check();
   }
 
+  @Test void testPullConstantThroughUnion1_1() {
+    final String sql = "select 2, deptno, deptno  deptnoAlias from emp where deptno = 1\n"
+        + "union all\n"
+        + "select 2, deptno, deptno  deptnoAlias from emp where deptno = 1";
+    sql(sql)
+        .withTrim(true)
+        .withRule(CoreRules.UNION_PULL_UP_CONSTANTS,
+            CoreRules.PROJECT_MERGE)
+        .check();
+  }
+
+
+
   @Test void testPullConstantThroughUnion2() {
     // Negative test: constants should not be pulled up
     final String sql = "select 2, deptno, job from emp as e1\n"
