@@ -1379,6 +1379,49 @@ class RelToSqlConverterTest {
         .withPostgresql().ok(expectedPostgresql);
   }
 
+  @Test void testMissingParentheses() {
+    final String query = "select \"product_id\" from \"foodmart\".\"product\" where " +
+        "(\"product_id\" = 0) = (\"product_class_id\" = 0)";
+    final String expectedQuery = "SELECT \"product_id\"\nFROM \"foodmart\".\"product\"\nWHERE " +
+        "(\"product_id\" = 0) = (\"product_class_id\" = 0)";
+    sql(query)
+        .ok(expectedQuery);
+  }
+
+  @Test void testMissingParentheses3() {
+    final String query = "select \"product_id\" from \"foodmart\".\"product\" where" +
+        " (\"product_id\" = 0) in (select \"product_id\" = 0 from \"foodmart\".\"product\")";
+    final String expectedQuery = "SELECT \"product_id\"\nFROM \"foodmart\".\"product\"\n"
+  +
+        "WHERE (\"product_id\" = 0) IN (SELECT \"product_id\" = 0\nFROM \"foodmart\".\"product\")";
+    sql(query)
+        .ok(expectedQuery);
+  }
+
+  @Test void testMissingParentheses4() {
+    final String query = "select (\"product_id\" = 0) = (\"product_class_id\" = 0) from \"foodmart\".\"product\"";
+    final String expectedQuery = "SELECT (\"product_id\" = 0) = (\"product_class_id\" = 0)\n"
+  +
+        "FROM \"foodmart\".\"product\"";
+    sql(query)
+//        .ok(expectedQuery)
+        .withPostgresql().ok(expectedQuery);
+  }
+
+  @Test void testMissingParentheses5() {
+    final String query = "select (\"product_id\" in (select \"product_class_id\" from \"foodmart\".\"product\")) in  (select \"product_class_id\" = 0 from \"foodmart\".\"product\") from \"foodmart\".\"product\"";
+    final String expectedQuery = "SELECT \"product_id\" IN (SELECT \"product_class_id\"\nFROM \"foodmart\".\"product\") IN (SELECT \"product_class_id\" = 0\nFROM \"foodmart\".\"product\")\nFROM \"foodmart\".\"product\"";
+    sql(query).withConfig(c -> c.withExpand(false)).withConfig(c -> c.withInSubQueryThreshold(4))
+        .ok(expectedQuery);
+  }
+
+  @Test void testMissingParentheses6() {
+    final String query = "select (\"product_id\" not in (select \"product_class_id\" from \"foodmart\".\"product\")) in  (select \"product_class_id\" = 0 from \"foodmart\".\"product\") from \"foodmart\".\"product\"";
+    final String expectedQuery = "SELECT \"product_id\" NOT IN (SELECT \"product_class_id\"\nFROM \"foodmart\".\"product\") IN (SELECT \"product_class_id\" = 0\nFROM \"foodmart\".\"product\")\nFROM \"foodmart\".\"product\"";
+    sql(query).withConfig(c -> c.withExpand(false)).withConfig(c -> c.withInSubQueryThreshold(4))
+        .ok(expectedQuery);
+  }
+
   /** Test case for
    * <a href="https://issues.apache.org/jira/browse/CALCITE-5955">[CALCITE-5955]
    * BigQuery PERCENTILE functions are unparsed incorrectly</a>. */
