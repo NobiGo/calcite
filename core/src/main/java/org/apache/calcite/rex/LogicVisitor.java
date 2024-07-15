@@ -146,6 +146,9 @@ public class LogicVisitor extends RexUnaryBiVisitor<@Nullable Logic> {
         arg = Logic.TRUE_FALSE;
       }
     }
+    if (subQuery.getType().isNullable()) {
+      arg = Logic.TRUE_FALSE_UNKNOWN;
+    }
     return end(subQuery, arg);
   }
 }

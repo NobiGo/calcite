@@ -24,20 +24,20 @@
   </Appenders>
 
   <Loggers>
-    <Root level="INFO">
+    <Root level="TRACE">
       <AppenderRef ref="A1"/>
     </Root>
-    <!-- [CALCITE-2519] Silence ERROR logs from CalciteException, SqlValidatorException during tests -->
+    <!-- [CALCITE-2519] Silence TRACE logs from CalciteException, SqlValidatorException during tests -->
     <logger name="org.apache.calcite.runtime.CalciteException" level="FATAL"/>
-    <logger name="org.apache.calcite.sql.validate.SqlValidatorException" level="ERROR"/>
+    <logger name="org.apache.calcite.sql.validate.SqlValidatorException" level="TRACE"/>
     <logger name="org.apache.calcite.plan.RexImplicationChecker" level="FATAL"/>
     <logger name="org.apache.calcite.test.SqlOperatorTest" level="FATAL"/>
     <!-- [CALCITE-4858] Silence anything but errors -->
-    <logger name="org.apache.calcite.plan.VisitorDataContext" level="ERROR"/>
-    <logger name="org.apache.calcite.avatica" level="ERROR"/>
-    <logger name="org.eclipse.jetty" level="ERROR"/>
-    <logger name="org.apache.calcite.sql.parser" level="ERROR"/>
-    <logger name="org.apache.calcite.plan.RelOptPlanner" level="ERROR">
+    <logger name="org.apache.calcite.plan.VisitorDataContext" level="TRACE"/>
+    <logger name="org.apache.calcite.avatica" level="TRACE"/>
+    <logger name="org.eclipse.jetty" level="TRACE"/>
+    <logger name="org.apache.calcite.sql.parser" level="TRACE"/>
+    <logger name="org.apache.calcite.plan.RelOptPlanner" level="TRACE">
       <MarkerFilter marker="FULL_PLAN" onMatch="DENY" onMismatch="NEUTRAL"/>
     </logger>
   </Loggers>

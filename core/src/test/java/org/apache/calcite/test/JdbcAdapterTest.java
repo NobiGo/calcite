@@ -189,6 +189,123 @@ class JdbcAdapterTest {
             + "ON \"t\".\"DEPTNO\" = \"t0\".\"DEPTNO\"");
   }
 
+  @Test void testLeftJoinWithSubqueryCondition() {
+    CalciteAssert.model(JdbcTest.SCOTT_MODEL)
+        .query("select *\n"
+            + "from scott.bonus b left join scott.emp e\n"
+            + "on e.deptno in (select deptno from scott.dept b)")
+        .explainContains("PLAN=JdbcToEnumerableConverter\n"
+            + "  JdbcProject(ENAME=[$0], JOB=[$1], SAL=[$2], COMM=[$3], EMPNO=[$4], ENAME0=[$5], JOB0=[$6], MGR=[$7], HIREDATE=[$8], SAL0=[$9], COMM0=[$10], DEPTNO=[$11])\n"
+            + "    JdbcJoin(condition=[true], joinType=[left])\n"
+            + "      JdbcTableScan(table=[[SCOTT, BONUS]])\n"
+            + "      JdbcJoin(condition=[=($7, $8)], joinType=[inner])\n"
+            + "        JdbcTableScan(table=[[SCOTT, EMP]])\n"
+            + "        JdbcAggregate(group=[{0}])\n"
+            + "          JdbcTableScan(table=[[SCOTT, DEPT]])\n\n")
+        .runs()
+        .enable(CalciteAssert.DB == CalciteAssert.DatabaseInstance.HSQLDB)
+        .planHasSql("SELECT \"BONUS\".\"ENAME\", \"BONUS\".\"JOB\", \"BONUS\".\"SAL\", \"BONUS\".\"COMM\", \"EMP\".\"EMPNO\", \"EMP\".\"ENAME\" AS \"ENAME0\", \"EMP\".\"JOB\" AS \"JOB0\", \"EMP\".\"MGR\", \"EMP\".\"HIREDATE\", \"EMP\".\"SAL\" AS \"SAL0\", \"EMP\".\"COMM\" AS \"COMM0\", \"EMP\".\"DEPTNO\"\n"
+            + "FROM \"SCOTT\".\"BONUS\"\n"
+            + "LEFT JOIN (\"SCOTT\".\"EMP\" INNER JOIN (SELECT \"DEPTNO\"\n"
+            + "FROM \"SCOTT\".\"DEPT\"\n"
+            + "GROUP BY \"DEPTNO\") AS \"t\" ON \"EMP\".\"DEPTNO\" = \"t\".\"DEPTNO\") ON TRUE");
+  }
+
+  @Test void testLeftJoinWithSubqueryCondition2() {
+    CalciteAssert.model(JdbcTest.SCOTT_MODEL)
+        .query("select *\n"
+            + "from scott.emp e left join scott.bonus b\n"
+            + "on e.deptno in (select deptno from scott.dept b)")
+        .explainContains("PLAN=JdbcToEnumerableConverter\n"
+            + "  JdbcProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], ENAME0=[$8], JOB0=[$9], SAL0=[$10], COMM0=[$11])\n"
+            + "    JdbcJoin(condition=[=($7, $12)], joinType=[left])\n"
+            + "      JdbcTableScan(table=[[SCOTT, EMP]])\n"
+            + "      JdbcJoin(condition=[true], joinType=[inner])\n"
+            + "        JdbcTableScan(table=[[SCOTT, BONUS]])\n"
+            + "        JdbcAggregate(group=[{0}])\n"
+            + "          JdbcTableScan(table=[[SCOTT, DEPT]])\n\n")
+        .runs()
+        .enable(CalciteAssert.DB == CalciteAssert.DatabaseInstance.HSQLDB)
+        .planHasSql("SELECT \"EMP\".\"EMPNO\", \"EMP\".\"ENAME\", \"EMP\".\"JOB\", \"EMP\".\"MGR\", \"EMP\".\"HIREDATE\", \"EMP\".\"SAL\", \"EMP\".\"COMM\", \"EMP\".\"DEPTNO\", \"BONUS\".\"ENAME\" AS \"ENAME0\", \"BONUS\".\"JOB\" AS \"JOB0\", \"BONUS\".\"SAL\" AS \"SAL0\", \"BONUS\".\"COMM\" AS \"COMM0\"\nFROM \"SCOTT\".\"EMP\"\n"
+            + "LEFT JOIN (\"SCOTT\".\"BONUS\" CROSS JOIN (SELECT \"DEPTNO\"\nFROM \"SCOTT\".\"DEPT\"\n"
+            + "GROUP BY \"DEPTNO\") AS \"t\") ON \"EMP\".\"DEPTNO\" = \"t\".\"DEPTNO\"");
+  }
+
+
+  @Test void testLeftJoinWithSubqueryCondition3() {
+    CalciteAssert.model(JdbcTest.SCOTT_MODEL)
+        .query("select *\n"
+            + "from scott.emp e right join scott.bonus b\n"
+            + "on e.deptno in (select deptno from scott.dept b)")
+        .explainContains("PLAN=JdbcToEnumerableConverter\n"
+            + "  JdbcProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], ENAME0=[$8], JOB0=[$9], SAL0=[$10], COMM0=[$11])\n"
+            + "    JdbcJoin(condition=[=($7, $12)], joinType=[right])\n"
+            + "      JdbcTableScan(table=[[SCOTT, EMP]])\n"
+            + "      JdbcJoin(condition=[true], joinType=[inner])\n"
+            + "        JdbcTableScan(table=[[SCOTT, BONUS]])\n"
+            + "        JdbcAggregate(group=[{0}])\n"
+            + "          JdbcTableScan(table=[[SCOTT, DEPT]])\n\n")
+        .runs()
+        .enable(CalciteAssert.DB == CalciteAssert.DatabaseInstance.HSQLDB)
+        .planHasSql("SELECT \"EMP\".\"EMPNO\", \"EMP\".\"ENAME\", \"EMP\".\"JOB\", \"EMP\".\"MGR\", \"EMP\".\"HIREDATE\", \"EMP\".\"SAL\", \"EMP\".\"COMM\", \"EMP\".\"DEPTNO\", \"BONUS\".\"ENAME\" AS \"ENAME0\", \"BONUS\".\"JOB\" AS \"JOB0\", \"BONUS\".\"SAL\" AS \"SAL0\", \"BONUS\".\"COMM\" AS \"COMM0\"\nFROM \"SCOTT\".\"EMP\"\n"
+            + "LEFT JOIN (\"SCOTT\".\"BONUS\" CROSS JOIN (SELECT \"DEPTNO\"\nFROM \"SCOTT\".\"DEPT\"\n"
+            + "GROUP BY \"DEPTNO\") AS \"t\") ON \"EMP\".\"DEPTNO\" = \"t\".\"DEPTNO\"");
+  }
+
+
+  @Test void testAioob() {
+    CalciteAssert.model(JdbcTest.SCOTT_MODEL)
+        .query("select job\n"
+            + "from scott.emp e left join scott.dept d\n"
+            + "on e.deptno = d.deptno and e.job not in (select job from scott.bonus b)")
+        .runs();
+  }
+
+
+  @Test void testAioob2() {
+    CalciteAssert.model(JdbcTest.SCOTT_MODEL)
+        .query("select *\n"
+            + "from scott.bonus b left join scott.emp e\n"
+            + "on  e.ename = b.ename  and e.deptno in (select deptno from scott.dept b)")
+        .explainContains("PLAN=JdbcToEnumerableConverter\n" +
+            "  JdbcProject(ENAME=[$0], JOB=[$1], SAL=[$2], COMM=[$3], EMPNO=[$4], ENAME0=[$5], JOB0=[$6], MGR=[$7], HIREDATE=[$8], SAL0=[$9], COMM0=[$10], DEPTNO=[$11])\n" +
+            "    JdbcJoin(condition=[=($5, $0)], joinType=[left])\n" +
+            "      JdbcTableScan(table=[[SCOTT, BONUS]])\n" +
+            "      JdbcJoin(condition=[=($7, $8)], joinType=[inner])\n" +
+            "        JdbcTableScan(table=[[SCOTT, EMP]])\n" +
+            "        JdbcAggregate(group=[{0}])\n" +
+            "          JdbcTableScan(table=[[SCOTT, DEPT]])\n\n")
+        .runs()
+        .enable(CalciteAssert.DB == CalciteAssert.DatabaseInstance.HSQLDB)
+        .planHasSql("SELECT \"BONUS\".\"ENAME\", \"BONUS\".\"JOB\", \"BONUS\".\"SAL\", \"BONUS\".\"COMM\", \"EMP\".\"EMPNO\", \"EMP\".\"ENAME\" AS \"ENAME0\", \"EMP\".\"JOB\" AS \"JOB0\", \"EMP\".\"MGR\", \"EMP\".\"HIREDATE\", \"EMP\".\"SAL\" AS \"SAL0\", \"EMP\".\"COMM\" AS \"COMM0\", \"EMP\".\"DEPTNO\"\n"
+            + "FROM \"SCOTT\".\"BONUS\"\n"
+            + "LEFT JOIN (\"SCOTT\".\"EMP\" INNER JOIN (SELECT \"DEPTNO\"\n"
+            + "FROM \"SCOTT\".\"DEPT\"\n"
+            + "GROUP BY \"DEPTNO\") AS \"t\" ON \"EMP\".\"DEPTNO\" = \"t\".\"DEPTNO\") ON TRUE");
+  }
+
+  @Test void testLeftJoinWithSubqueryCondition4() {
+    CalciteAssert.model(JdbcTest.SCOTT_MODEL)
+        .query("select *\n"
+            + "from scott.dept d left join scott.emp e\n"
+            + "on e.job in (select job from scott.bonus b)")
+        .explainContains("PLAN=JdbcToEnumerableConverter\n"
+            + "  JdbcProject(ENAME=[$0], JOB=[$1], SAL=[$2], COMM=[$3], EMPNO=[$4], ENAME0=[$5], JOB0=[$6], MGR=[$7], HIREDATE=[$8], SAL0=[$9], COMM0=[$10], DEPTNO=[$11])\n"
+            + "    JdbcJoin(condition=[true], joinType=[left])\n"
+            + "      JdbcTableScan(table=[[SCOTT, BONUS]])\n"
+            + "      JdbcJoin(condition=[=($7, $8)], joinType=[inner])\n"
+            + "        JdbcTableScan(table=[[SCOTT, EMP]])\n"
+            + "        JdbcAggregate(group=[{0}])\n"
+            + "          JdbcTableScan(table=[[SCOTT, DEPT]])\n\n")
+        .runs()
+        .enable(CalciteAssert.DB == CalciteAssert.DatabaseInstance.HSQLDB)
+        .planHasSql("SELECT \"BONUS\".\"ENAME\", \"BONUS\".\"JOB\", \"BONUS\".\"SAL\", \"BONUS\".\"COMM\", \"EMP\".\"EMPNO\", \"EMP\".\"ENAME\" AS \"ENAME0\", \"EMP\".\"JOB\" AS \"JOB0\", \"EMP\".\"MGR\", \"EMP\".\"HIREDATE\", \"EMP\".\"SAL\" AS \"SAL0\", \"EMP\".\"COMM\" AS \"COMM0\", \"EMP\".\"DEPTNO\"\n"
+            + "FROM \"SCOTT\".\"BONUS\"\n"
+            + "LEFT JOIN (\"SCOTT\".\"EMP\" INNER JOIN (SELECT \"DEPTNO\"\n"
+            + "FROM \"SCOTT\".\"DEPT\"\n"
+            + "GROUP BY \"DEPTNO\") AS \"t\" ON \"EMP\".\"DEPTNO\" = \"t\".\"DEPTNO\") ON TRUE");
+  }
+
   @Test void testPushDownSort() {
     CalciteAssert.model(JdbcTest.SCOTT_MODEL)
         .with(CalciteConnectionProperty.TOPDOWN_OPT.camelName(), false)

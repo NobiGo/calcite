@@ -607,7 +607,7 @@ public class SubQueryRemoveRule
     // inner join (select distinct deptno from emp) as dt
     //   on e.deptno = dt.deptno
     //
-
+    final boolean isJoin = builder.fields().size() != offset;
     builder.push(e.rel);
     final List<RexNode> fields = new ArrayList<>(builder.fields());
 
@@ -737,15 +737,25 @@ public class SubQueryRemoveRule
             .collect(Collectors.toList());
     switch (logic) {
     case TRUE:
+      if (isJoin) {
+        builder.join(JoinRelType.INNER, trueLiteral, variablesSet);
+        return builder.and(conditions);
+      }
       builder.join(JoinRelType.INNER, builder.and(conditions), variablesSet);
       return trueLiteral;
     default:
       break;
     }
-    // Now the left join
-    builder.join(JoinRelType.LEFT, builder.and(conditions), variablesSet);
 
     final ImmutableList.Builder<RexNode> operands = ImmutableList.builder();
+    if (isJoin) {
+      builder.join(JoinRelType.INNER, trueLiteral, variablesSet);
+    } else {
+      // Now the left join
+      builder.join(JoinRelType.LEFT, builder.and(conditions), variablesSet);
+    }
+
+
     RexLiteral b = trueLiteral;
     switch (logic) {
     case TRUE_FALSE_UNKNOWN:
