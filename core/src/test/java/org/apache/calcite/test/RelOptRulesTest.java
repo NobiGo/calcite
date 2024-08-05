@@ -849,6 +849,20 @@ class RelOptRulesTest extends RelOptTestBase {
         .checkUnchanged();
   }
 
+
+  @Test void testUnionValueToValuesRule() {
+    final String sql = "" +
+        "\n" +
+        "with t1(a, y) as (select * from (values (1, 2), (3, null), (7369, null), (7499, 30), (null, 20), (null, 5)) as t1)\n" +
+        "select *\n" +
+        "from t1\n" +
+        "where (t1.a, t1.y) in ((1, 2), (3, null), (7369, null), (7499, 30), (null, 20), (null, 5))";
+    sql(sql)
+        .withRule(CoreRules.UNION_VALUES_TO_VALUES_RULE)
+        .withInSubQueryThreshold(0)
+        .check();
+  }
+
   /** Test case for
    * <a href="https://issues.apache.org/jira/browse/CALCITE-3887">[CALCITE-3887]
    * Filter and Join conditions may not need to retain nullability during simplifications</a>. */

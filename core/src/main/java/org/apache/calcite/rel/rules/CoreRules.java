@@ -760,6 +760,9 @@ public class CoreRules {
   public static final UnionEliminatorRule UNION_REMOVE =
       UnionEliminatorRule.Config.DEFAULT.toRule();
 
+  public static final UnionValuesToValuesRule UNION_VALUES_TO_VALUES_RULE =
+      UnionValuesToValuesRule.Config.DEFAULT.toRule();
+
   /** Rule that pulls up constants through a Union operator. */
   public static final UnionPullUpConstantsRule UNION_PULL_UP_CONSTANTS =
        UnionPullUpConstantsRule.Config.DEFAULT.toRule();
