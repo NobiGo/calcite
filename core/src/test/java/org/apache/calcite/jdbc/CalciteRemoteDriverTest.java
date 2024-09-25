@@ -83,10 +83,21 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * Test for Calcite's remote JDBC driver.
- * Technically speaking, the test is thread safe, however Caclite/Avatica have thread-safety issues
- * see https://issues.apache.org/jira/browse/CALCITE-2853.
+ *
+ * <p>Technically, the test is thread-safe, however Calcite/Avatica have
+ * thread-safety issues; see
+ * <a href="https://issues.apache.org/jira/browse/CALCITE-2853">
+ * [CALCITE-2853] avatica.MetaImpl and calcite.jdbc.CalciteMetaImpl are not
+ * thread-safe</a>.
+ *
+ * <p>Under JDK 23 and higher, this test requires
+ * "{@code -Djava.security.manager=allow}" command-line arguments due to
+ * Avatica's use of deprecated methods in {@link javax.security.auth.Subject}.
+ * These arguments are set automatically if you run via Gradle.
  */
 @Execution(ExecutionMode.SAME_THREAD)
 class CalciteRemoteDriverTest {
@@ -102,54 +113,6 @@ class CalciteRemoteDriverTest {
           return getRemoteConnection();
         }
       };
-
-  private static final Function<Connection, ResultSet> GET_SCHEMAS =
-      connection -> {
-        try {
-          return connection.getMetaData().getSchemas();
-        } catch (SQLException e) {
-          throw TestUtil.rethrow(e);
-        }
-      };
-
-  private static final Function<Connection, ResultSet> GET_CATALOGS =
-      connection -> {
-        try {
-          return connection.getMetaData().getCatalogs();
-        } catch (SQLException e) {
-          throw TestUtil.rethrow(e);
-        }
-      };
-
-  private static final Function<Connection, ResultSet> GET_COLUMNS =
-      connection -> {
-        try {
-          return connection.getMetaData().getColumns(null, null, null, null);
-        } catch (SQLException e) {
-          throw TestUtil.rethrow(e);
-        }
-      };
-
-  private static final Function<Connection, ResultSet> GET_TYPEINFO =
-      connection -> {
-        try {
-          return connection.getMetaData().getTypeInfo();
-        } catch (SQLException e) {
-          throw TestUtil.rethrow(e);
-        }
-      };
-
-  private static final Function<Connection, ResultSet> GET_TABLE_TYPES =
-      connection -> {
-        try {
-          return connection.getMetaData().getTableTypes();
-        } catch (SQLException e) {
-          throw TestUtil.rethrow(e);
-        }
-      };
-
-  private static Connection localConnection;
-  private static HttpServer start;
 
   @BeforeAll public static void beforeClass() throws Exception {
     localConnection = CalciteAssert.hr().connect();
