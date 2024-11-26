@@ -16,62 +16,32 @@
 # limitations under the License.
 #
 !use post
-values 1;
-EXPR$0
-1
+!set insubquerythreshold 0
+
+select deptno from emp where deptno > some (23, 56);
+DEPTNO
 !ok
 
-# [CALCITE-6678] Support dual table query (enabled in MySQL, Oracle libraries)
-!set outputformat mysql
-!use scott-mysql
-
-# MySQL supports users to specify the dual table, and also supports users not to specify the dual table.
-SELECT 1 + 1 FROM DUAL;
-+--------+
-| EXPR$0 |
-+--------+
-|      2 |
-+--------+
-(1 row)
-
+select deptno from emp where deptno > some (cast(23 as integer), cast(56 as integer));
+DEPTNO
 !ok
 
-SELECT 1 + 1;
-+--------+
-| EXPR$0 |
-+--------+
-|      2 |
-+--------+
-(1 row)
-
+select deptno from emp where deptno > all (cast(23 as integer), cast(56 as integer));
+DEPTNO
 !ok
 
-# Oracle supports users to specify the dual table, but not supports users not to specify the dual table.
-!use scott-oracle
-
-SELECT 1 + 1 FROM DUAL;
-+--------+
-| EXPR$0 |
-+--------+
-|      2 |
-+--------+
-(1 row)
-
+select deptno from emp where deptno > all (23, 56);
+DEPTNO
 !ok
 
-SELECT 1 + 1;
-java.sql.SQLException: Error while executing SQL "SELECT 1 + 1": From line 1, column 1 to line 1, column 12: SELECT must have a FROM clause
 
-!error
-
-SELECT * FROM DUAL;
-+-------+
-| DUMMY |
-+-------+
-| X     |
-+-------+
-(1 row)
-
+select deptno from emp where deptno > some (VALUES (23), (56));
+DEPTNO
+30
+30
+50
+50
+60
 !ok
 
 # End dummy.iq
