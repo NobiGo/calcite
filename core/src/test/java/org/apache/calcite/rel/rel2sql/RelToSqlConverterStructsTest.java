@@ -196,4 +196,19 @@ class RelToSqlConverterStructsTest {
         + "FROM \"myDb\".\"myTable\"";
     sql(query).ok(expected);
   }
+
+  /** Test case for
+   * <a href="https://issues.apache.org/jira/browse/CALCITE-6218">[CALCITE-6218]
+   * RelToSqlConverter fails to convert correlated lateral joins</a>. */
+  @Test void testUncollectLateralJoin() {
+    final String query = "select \"a\",\n"
+        + "\"x\"\n"
+        + "from \"myDb\".\"myTable\",\n"
+        + "unnest(\"xs\") as \"x\"";
+    final String expected = "SELECT \"$cor0\".\"a\", \"t10\".\"xs\" AS \"x\"\n"
+        + "FROM (SELECT \"a\", \"n1\".\"n11\".\"b\", \"n1\".\"n12\".\"c\", \"n2\".\"d\", \"xs\", \"e\"\n"
+        + "FROM \"myDb\".\"myTable\") AS \"$cor0\",\nLATERAL UNNEST (SELECT \"$cor0\".\"xs\"\n"
+        + "FROM (VALUES (0)) AS \"t\" (\"ZERO\")) AS \"t10\" (\"xs\")";
+    sql(query).schema(CalciteAssert.SchemaSpec.MY_DB).ok(expected);
+  }
 }

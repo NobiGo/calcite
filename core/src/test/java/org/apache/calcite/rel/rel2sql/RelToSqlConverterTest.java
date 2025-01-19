@@ -781,6 +781,60 @@ class RelToSqlConverterTest {
     assertThat(toSql(root), isLinux(expectedSql));
   }
 
+  /** Test case for
+   * <a href="https://issues.apache.org/jira/browse/CALCITE-6785">[CALCITE-6785]
+   * RelToSqlConverter generate wrong sql when UNNEST has a correlate variable</a>. */
+  @Test void testUnnestWithCorrelate() {
+    final String sql = "SELECT\n"
+        + "    \"department_id\",\n"
+        + "    SPLIT (\"department_description\", ','),\n"
+        + "    UNNESTVALUES AS UNNESTALIAS\n"
+        + "FROM\n"
+        + "    \"foodmart\".\"department\",\n"
+        + "    UNNEST(SPLIT (\"department_description\", ',')) AS UNNESTVALUES";
+
+    final String expected = "SELECT \"$cor0\".\"department_id\", "
+        + "SPLIT(\"$cor0\".\"department_description\", ','), \"t10\".\"col_0\" AS \"UNNESTALIAS\"\n"
+        + "FROM (SELECT \"department_id\", \"department_description\", "
+        + "SPLIT(\"department_description\", ',') AS \"$f2\"\n"
+        + "FROM \"foodmart\".\"department\") AS \"$cor0\",\n"
+        + "LATERAL UNNEST (SELECT \"$cor0\".\"$f2\"\n"
+        + "FROM (VALUES (0)) AS \"t\" (\"ZERO\")) AS \"t10\" (\"col_0\")";
+    sql(sql).withLibrary(SqlLibrary.BIG_QUERY).ok(expected);
+  }
+
+  /** Test case for
+   * <a href="https://issues.apache.org/jira/browse/CALCITE-5395">[CALCITE-5395]
+   * RelToSql converter fails when SELECT * is under a semi-join node</a>. */
+  @Test void testUnionUnderSemiJoinNode() {
+    final RelBuilder builder = relBuilder();
+    final RelNode base = builder
+        .scan("EMP")
+        .scan("EMP")
+        .union(true)
+        .build();
+    final RelNode root = builder
+        .push(base)
+        .scan("DEPT")
+        .join(
+            JoinRelType.SEMI, builder.equals(
+                builder.field(2, 1, "DEPTNO"),
+                builder.field(2, 0, "DEPTNO")))
+        .project(builder.field("DEPTNO"))
+        .build();
+    final String expectedSql = "SELECT \"DEPTNO\"\n"
+        + "FROM (SELECT *\n"
+        + "FROM (SELECT *\n"
+        + "FROM \"scott\".\"EMP\"\n"
+        + "UNION ALL\n"
+        + "SELECT *\n"
+        + "FROM \"scott\".\"EMP\")\n"
+        + "WHERE EXISTS (SELECT 1\n"
+        + "FROM \"scott\".\"DEPT\"\n"
+        + "WHERE \"t\".\"DEPTNO\" = \"DEPT\".\"DEPTNO\")) AS \"t\"";
+    assertThat(toSql(root), isLinux(expectedSql));
+  }
+
   @Test void testSemiNestedJoin() {
     final RelBuilder builder = relBuilder();
     final RelNode base = builder
