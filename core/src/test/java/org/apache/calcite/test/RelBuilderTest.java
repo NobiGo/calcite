@@ -3436,7 +3436,7 @@ public class RelBuilderTest {
             + "  LogicalTableScan(table=[[scott, EMP]])\n";
     // s is nullable because "GROUP BY ()" may have a group that contains 0 rows
     final String expectedRowType =
-        "RecordType(SMALLINT s, BIGINT NOT NULL c) NOT NULL";
+        "RecordType(BIGINT s, BIGINT NOT NULL c) NOT NULL";
     final RelNode r = f.apply(createBuilder());
     assertThat(r, hasTree(expected));
     assertThat(r.getRowType().getFullTypeString(), is(expectedRowType));

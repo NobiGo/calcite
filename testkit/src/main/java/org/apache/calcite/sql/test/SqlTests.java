@@ -56,6 +56,9 @@ public abstract class SqlTests {
   public static final TypeChecker INTEGER_TYPE_CHECKER =
       new SqlTypeChecker(SqlTypeName.INTEGER);
 
+  public static final TypeChecker BIGINT_TYPE_CHECKER =
+      new SqlTypeChecker(SqlTypeName.BIGINT);
+
   public static final TypeChecker BOOLEAN_TYPE_CHECKER =
       new SqlTypeChecker(SqlTypeName.BOOLEAN);
 

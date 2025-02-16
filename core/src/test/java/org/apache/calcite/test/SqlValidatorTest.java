@@ -2170,7 +2170,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + " VARCHAR(20) NOT NULL ENAME, INTEGER MGR,"
         + " TIMESTAMP(0) NOT NULL HIREDATE, INTEGER NOT NULL COMM,"
         + " INTEGER NOT NULL DEPTNO, BOOLEAN NOT NULL SLACKER,"
-        + " INTEGER C_SS, INTEGER M_SS) NOT NULL");
+        + " BIGINT C_SS, BIGINT M_SS) NOT NULL");
   }
 
   @Test void testPivot2() {
@@ -2181,8 +2181,8 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + "        FOR (job) IN ('CLERK', 'MANAGER' mgr, 'ANALYST' AS \"a\"))\n"
         + "ORDER BY deptno";
     final String type = "RecordType(INTEGER NOT NULL DEPTNO, "
-        + "INTEGER 'CLERK'_SUM_SAL, BIGINT NOT NULL 'CLERK'_COUNT, "
-        + "INTEGER MGR_SUM_SAL, BIGINT NOT NULL MGR_COUNT, INTEGER a_SUM_SAL, "
+        + "BIGINT 'CLERK'_SUM_SAL, BIGINT NOT NULL 'CLERK'_COUNT, "
+        + "BIGINT MGR_SUM_SAL, BIGINT NOT NULL MGR_COUNT, BIGINT a_SUM_SAL, "
         + "BIGINT NOT NULL a_COUNT) NOT NULL";
     sql(sql).type(type);
   }
@@ -2199,8 +2199,8 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     // Oracle uses parse tree without spaces around '||',
     //   'A B'||' D'_10_SUM_SAL
     // but close enough.
-    final String type = "RecordType(INTEGER 'A B' || ' D'_10_SS, "
-        + "INTEGER MGR_SS, INTEGER a_SS) NOT NULL";
+    final String type = "RecordType(BIGINT 'A B' || ' D'_10_SS, "
+        + "BIGINT MGR_SS, BIGINT a_SS) NOT NULL";
     sql(sql).type(type);
   }
 
@@ -2209,8 +2209,8 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + "FROM (SELECT deptno, job, sal FROM emp)\n"
         + "PIVOT (SUM(sal) AS ss, MIN(job)\n"
         + "    FOR deptno IN (10 AS ten, 20))";
-    final String type = "RecordType(INTEGER TEN_SS, VARCHAR(10) TEN, "
-        + "INTEGER 20_SS, VARCHAR(10) 20) NOT NULL";
+    final String type = "RecordType(BIGINT TEN_SS, VARCHAR(10) TEN, "
+        + "BIGINT 20_SS, VARCHAR(10) 20) NOT NULL";
     sql(sql).type(type);
   }
 
@@ -2229,7 +2229,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + "  FOR (job, deptno, slacker, mgr, ename)\n"
         + "  IN (('CLERK', 10, false, null, ename) AS c10))";
     sql(sql).type("RecordType(INTEGER NOT NULL EMPNO,"
-        + " INTEGER C10_SUM_SAL, BIGINT NOT NULL C10_COUNT_COMM,"
+        + " BIGINT C10_SUM_SAL, BIGINT NOT NULL C10_COUNT_COMM,"
         + " TIMESTAMP(0) C10_MIN_HIREDATE,"
         + " TIMESTAMP(0) C10_MAX_HIREDATE) NOT NULL");
   }
@@ -2267,7 +2267,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
     final String sql = "SELECT * FROM (SELECT sal, deptno, job, mgr FROM Emp)\n"
         + "PIVOT (sum(sal + deptno + 1)\n"
         + "   FOR job in ('CLERK' AS c, 'ANALYST' AS a))";
-    sql(sql).type("RecordType(INTEGER MGR, INTEGER C, INTEGER A) NOT NULL");
+    sql(sql).type("RecordType(INTEGER MGR, BIGINT C, BIGINT A) NOT NULL");
   }
 
   @Test void testPivotValueMismatch() {
@@ -5873,7 +5873,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + "FROM emp\n"
         + "QUALIFY ^SUM(deptno) = 1^";
     f.withSql(qualifyOnNonWindowFunction)
-        .fails("QUALIFY expression 'SUM\\(`EMP`\\.`DEPTNO`\\) = 1' "
+        .fails("QUALIFY expression 'SUM\\(`EMP`\\.`DEPTNO`\\) = CAST\\(1 AS BIGINT\\)' "
             + "must contain a window function");
 
     final String qualifyOnAliasedNonWindowFunction = ""
@@ -5881,7 +5881,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + "FROM emp\n"
         + "QUALIFY sumDeptNo = 1^";
     f.withSql(qualifyOnAliasedNonWindowFunction)
-        .fails("QUALIFY expression 'SUM\\(`EMP`\\.`DEPTNO`\\) = 1' "
+        .fails("QUALIFY expression 'SUM\\(`EMP`\\.`DEPTNO`\\) = CAST\\(1 AS BIGINT\\)' "
             + "must contain a window function");
 
     // This query fails, since it's a mix of regular aggregates and window
@@ -6881,7 +6881,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + "from emp\n"
         + "group by rollup(deptno)")
         .ok()
-        .type("RecordType(INTEGER DEPTNO, BIGINT NOT NULL C, INTEGER NOT NULL S) NOT NULL");
+        .type("RecordType(INTEGER DEPTNO, BIGINT NOT NULL C, BIGINT NOT NULL S) NOT NULL");
 
     // EMPNO stays NOT NULL because it is not rolled up
     sql("select deptno, empno\n"
@@ -7230,11 +7230,11 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
 
     // Even though deptno is not null, its sum may be, because emp may be empty.
     sql("select sum(deptno) from emp")
-        .columnType("INTEGER");
+        .columnType("BIGINT");
     sql("select sum(deptno) from emp group by ()")
-        .columnType("INTEGER");
+        .columnType("BIGINT");
     sql("select sum(deptno) from emp group by empno")
-        .columnType("INTEGER NOT NULL");
+        .columnType("BIGINT NOT NULL");
   }
 
   @Test void testAggregateInOrderByFails() {
@@ -7250,7 +7250,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
 
   @Test void testAggregateFilter() {
     sql("select sum(empno) filter (where deptno < 10) as s from emp")
-        .type("RecordType(INTEGER S) NOT NULL");
+        .type("RecordType(BIGINT S) NOT NULL");
   }
 
   @Test void testAggregateFilterNotBoolean() {
@@ -8970,7 +8970,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
             + "FROM `CATALOG`.`SALES`.`DEPT` AS `DEPT`\n"
             + "WHERE `DEPT`.`NAME` = CAST('Moonracer' AS VARCHAR(10) CHARACTER SET `ISO-8859-1`)\n"
             + "GROUP BY `DEPT`.`NAME`\n"
-            + "HAVING SUM(`DEPT`.`DEPTNO`) > 3\n"
+            + "HAVING SUM(`DEPT`.`DEPTNO`) > CAST(3 AS BIGINT)\n"
             + "ORDER BY `NAME`");
   }
 
@@ -8989,7 +8989,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + "FROM `CATALOG`.`SALES`.`EMP` AS `EMP`) AS `E`\n"
         + "WHERE `E`.`ENAME` = CAST('Moonracer' AS VARCHAR(20) CHARACTER SET `ISO-8859-1`)\n"
         + "GROUP BY `E`.`ENAME`, `E`.`DEPTNO`, `E`.`SAL`\n"
-        + "HAVING SUM(`E`.`DEPTNO`) > 3\n"
+        + "HAVING SUM(`E`.`DEPTNO`) > CAST(3 AS BIGINT)\n"
         + "ORDER BY `ENAME`, `E`.`DEPTNO`, `E`.`SAL`";
     sql(sql)
         .withValidatorIdentifierExpansion(true)
@@ -9007,7 +9007,7 @@ public class SqlValidatorTest extends SqlValidatorTestCase {
         + "FROM `CATALOG`.`SALES`.`DEPT` AS `DEPT`\n"
         + "WHERE `DEPT`.`NAME` = CAST('Moonracer' AS VARCHAR(10) CHARACTER SET `ISO-8859-1`)\n"
         + "GROUP BY `DEPT`.`DEPTNO`\n"
-        + "HAVING SUM(`DEPT`.`DEPTNO`) > 0\n"
+        + "HAVING SUM(`DEPT`.`DEPTNO`) > CAST(0 AS BIGINT)\n"
         + "ORDER BY `DEPT`.`DEPTNO`";
     SqlValidatorTestCase.FIXTURE
         .withFactory(t -> t.withValidator(UnexpandedToDeptValidator::new))

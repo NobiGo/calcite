@@ -19,6 +19,7 @@ package org.apache.calcite.rel.type;
 import org.apache.calcite.sql.type.BasicSqlType;
 import org.apache.calcite.sql.type.SqlTypeFamily;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.sql.type.SqlTypeUtil;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -356,6 +357,27 @@ public abstract class RelDataTypeSystemImpl implements RelDataTypeSystem {
                   typeFactory.createSqlType(typeName, precision),
                   argumentType.isNullable());
         }
+      }
+      // For DECIMAL using default Precision and Scale,
+      // return this type Directly
+      if (SqlTypeUtil.isDecimal(argumentType)) {
+        return argumentType;
+      }
+      // For TINYINT, SMALLINT, INTEGER, BIGINT,
+      // using BIGINT
+      if (SqlTypeUtil.isExactNumeric(argumentType)) {
+        argumentType =
+            typeFactory.createTypeWithNullability(
+                typeFactory.createSqlType(SqlTypeName.BIGINT),
+                argumentType.isNullable());
+      }
+      // For FLOAT, REAL and DOUBLE,
+      // using DOUBLE
+      if (SqlTypeUtil.isApproximateNumeric(argumentType)) {
+        argumentType =
+            typeFactory.createTypeWithNullability(
+                typeFactory.createSqlType(SqlTypeName.DOUBLE),
+                argumentType.isNullable());
       }
     }
     return argumentType;

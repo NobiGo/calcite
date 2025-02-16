@@ -121,7 +121,7 @@ class SparkAdapterTest {
         + "group by x";
 
     final String plan = "PLAN="
-        + "EnumerableCalc(expr#0..5=[{inputs}], expr#6=[CAST($t1):INTEGER NOT NULL], expr#7=[CAST($t2):CHAR(1) NOT NULL], expr#8=[CAST($t3):CHAR(1) NOT NULL], expr#9=[CAST($t4):BIGINT NOT NULL], SUM_X=[$t6], MIN_Y=[$t7], MAX_Y=[$t8], CNT_Y=[$t9], CNT_DIST_Y=[$t5])\n"
+        + "EnumerableCalc(expr#0..5=[{inputs}], expr#6=[CAST($t1):BIGINT NOT NULL], expr#7=[CAST($t2):CHAR(1) NOT NULL], expr#8=[CAST($t3):CHAR(1) NOT NULL], expr#9=[CAST($t4):BIGINT NOT NULL], SUM_X=[$t6], MIN_Y=[$t7], MAX_Y=[$t8], CNT_Y=[$t9], CNT_DIST_Y=[$t5])\n"
         + "  EnumerableAggregate(group=[{0}], SUM_X=[MIN($2) FILTER $7], MIN_Y=[MIN($3) FILTER $7], MAX_Y=[MIN($4) FILTER $7], CNT_Y=[MIN($5) FILTER $7], CNT_DIST_Y=[COUNT($1) FILTER $6])\n"
         + "    EnumerableCalc(expr#0..6=[{inputs}], expr#7=[0], expr#8=[=($t6, $t7)], expr#9=[1], expr#10=[=($t6, $t9)], proj#0..5=[{exprs}], $g_0=[$t8], $g_1=[$t10])\n"
         + "      EnumerableAggregate(group=[{0, 1}], groups=[[{0, 1}, {0}]], SUM_X=[$SUM0($0)], MIN_Y=[MIN($1)], MAX_Y=[MAX($1)], CNT_Y=[COUNT()], $g=[GROUPING($0, $1)])\n"

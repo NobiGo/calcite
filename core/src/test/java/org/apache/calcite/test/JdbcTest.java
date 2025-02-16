@@ -4419,7 +4419,7 @@ public class JdbcTest {
             + START_OF_GROUP_DATA
             + ") t\n")
         .typeIs(
-            "[RN INTEGER NOT NULL, VAL INTEGER NOT NULL, EXPECTED INTEGER NOT NULL, START_OF_GROUP INTEGER NOT NULL, GROUP_ID INTEGER NOT NULL]")
+            "[RN INTEGER NOT NULL, VAL INTEGER NOT NULL, EXPECTED INTEGER NOT NULL, START_OF_GROUP INTEGER NOT NULL, GROUP_ID BIGINT NOT NULL]")
         .returnsUnordered(
             "RN=1; VAL=0; EXPECTED=1; START_OF_GROUP=1; GROUP_ID=1",
             "RN=2; VAL=0; EXPECTED=1; START_OF_GROUP=0; GROUP_ID=1",
@@ -4448,7 +4448,7 @@ public class JdbcTest {
             + ") t\n"
             + ") group by group_id\n")
         .typeIs(
-            "[GROUP_ID INTEGER NOT NULL, MIN_RN INTEGER NOT NULL, MAX_RN INTEGER NOT NULL, CNT_RN BIGINT NOT NULL, AVG_VAL INTEGER NOT NULL]")
+            "[GROUP_ID BIGINT NOT NULL, MIN_RN INTEGER NOT NULL, MAX_RN INTEGER NOT NULL, CNT_RN BIGINT NOT NULL, AVG_VAL INTEGER NOT NULL]")
         .returnsUnordered(
             "GROUP_ID=1; MIN_RN=1; MAX_RN=2; CNT_RN=2; AVG_VAL=0",
             "GROUP_ID=2; MIN_RN=3; MAX_RN=3; CNT_RN=1; AVG_VAL=1",

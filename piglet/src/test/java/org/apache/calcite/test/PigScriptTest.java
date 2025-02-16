@@ -68,9 +68,8 @@ class PigScriptTest extends PigRelTestBase {
     final String dataFile = projectRootDir + "/src/test/resources/input.data";
     String expectedPlan = ""
         + "LogicalSort(sort0=[$1], dir0=[DESC], fetch=[5])\n"
-        + "  LogicalProject(query=[$0], count=[CAST($1):BIGINT])\n"
-        + "    LogicalAggregate(group=[{0}], agg#0=[SUM($1)])\n"
-        + "      LogicalTableScan(table=[[" + dataFile + "]])\n";
+        + "  LogicalAggregate(group=[{0}], agg#0=[SUM($1)])\n"
+        + "    LogicalTableScan(table=[[" + dataFile + "]])\n";
 
     assertThat(rel, hasTree(expectedPlan));
   }

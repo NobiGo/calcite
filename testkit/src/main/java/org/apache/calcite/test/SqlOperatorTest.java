@@ -12139,7 +12139,7 @@ public class SqlOperatorTest {
     f.check("select sum(1) over (order by x)\n"
             + "from (select 1 as x, 2 as y\n"
             + "  from (values (true)))",
-        SqlTests.INTEGER_TYPE_CHECKER, 1);
+        SqlTests.BIGINT_TYPE_CHECKER, 1);
   }
 
   @Test void testElementFunc() {
@@ -15465,7 +15465,7 @@ public class SqlOperatorTest {
                 + "'SUM\\(<NUMERIC>\\)'.*",
             false);
     f.checkType("sum('name')", "DECIMAL(19, 9)");
-    f.checkAggType("sum(1)", "INTEGER NOT NULL");
+    f.checkAggType("sum(1)", "BIGINT NOT NULL");
     f.checkAggType("sum(1.2)", "DECIMAL(19, 1) NOT NULL");
     f.checkAggType("sum(DISTINCT 1.5)", "DECIMAL(19, 1) NOT NULL");
     f.checkFails("^sum()^",
