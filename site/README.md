@@ -22,59 +22,23 @@ limitations under the License.
 This directory contains the code for the Apache Calcite web site,
 [calcite.apache.org](https://calcite.apache.org/).
 
-You can build the site manually using your environment or use the docker compose file.
-
-## Manually
-
-### Setup your environment
-
-Site generation currently works best with ruby-2.5.1.
-
-1. `cd site`
-2. `git clone https://gitbox.apache.org/repos/asf/calcite-site.git target`
-3. `sudo apt-get install rubygems ruby2.5-dev zlib1g-dev` (linux)
-   `Use RubyInstaller to install rubygems as recommended at https://www.ruby-lang.org/en/downloads/` (Windows)
-4. `sudo gem install bundler`
-   `gem install bundler` (Windows)
-5. `bundle install`
-
-### Add javadoc
-
-1. `cd ..`
-2. `./gradlew javadocAggregate`
-3. `rm -rf site/target/javadocAggregate`
-   `rmdir site\target\javadocAggregate /S /Q` (Windows)
-4. `mkdir site/target`
-   `mkdir site\target` (Windows)
-5. `mv build/docs/javadocAggregate site/target`
-   `for /d %a in (build\docs\javadocAggregate*) do move %a site\target` (Windows)
-
-### Running locally
-
-Before opening a pull request, you can preview your contributions by
-running from within the directory:
-
-1. `bundle exec jekyll serve`
-2. Open [http://localhost:4000](http://localhost:4000)
-
-## Using docker
-
-### Setup your environment
+# Previewing the website locally using docker
+## Setup your environment
 
 1. Install [docker](https://docs.docker.com/install/)
-2. Install [docker-compose](https://docs.docker.com/compose/install/)
+2. Install [docker compose](https://docs.docker.com/compose/install/)
 
-### Build site
+## Build site
 
 1. `cd site`
-2. `docker-compose run build-site`
+2. `docker compose run build-site`
 
-### Generate javadoc
+## Generate javadoc
 
 1. `cd site`
 2. `docker-compose run generate-javadoc`
 
-### Running development mode locally
+## Running development mode locally
 
 You can preview your work while working on the site.
 
