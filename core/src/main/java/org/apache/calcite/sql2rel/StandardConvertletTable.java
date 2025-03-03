@@ -149,6 +149,7 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
     registerOp(SqlLibraryOperators.SAFE_CAST, this::convertCast);
     registerOp(SqlLibraryOperators.TRY_CAST, this::convertCast);
     registerOp(SqlLibraryOperators.INFIX_CAST, this::convertCast);
+    registerOp(SqlStdOperatorTable.COALESCE, this::convertCoalesce);
     registerOp(SqlStdOperatorTable.IS_DISTINCT_FROM,
         (cx, call) -> convertIsDistinctFrom(cx, call, false));
     registerOp(SqlStdOperatorTable.IS_NOT_DISTINCT_FROM,
@@ -812,6 +813,35 @@ public class StandardConvertletTable extends ReflectiveConvertletTable {
       }
     }
     return rexBuilder.makeCast(call.getParserPosition(), type, arg, safe, safe, formatArg);
+  }
+
+  protected RexNode convertCoalesce(SqlRexContext cx, SqlCall call) {
+    final RelDataType relDataType = cx.getValidator().getValidatedNodeType(call);
+    final RexBuilder rexBuilder = cx.getRexBuilder();
+    final List<SqlNode> sqlNodes = call.getOperandList();
+    final List<RexNode> rexNodes = new ArrayList<>();
+    for (SqlNode sqlNode : sqlNodes) {
+      RexNode rexNode = cx.convertExpression(sqlNode);
+      RelDataType relDataType1 =
+          cx.getValidator().getValidatedNodeType(sqlNode);
+      rexNodes.add(
+          rexBuilder.ensureType(call.getParserPosition(),
+          cx.getTypeFactory().createTypeWithNullability(relDataType, relDataType1.isNullable()),
+              rexNode, true));
+    }
+    if (!rexNodes.get(0).getType().isNullable()) {
+      return rexNodes.get(0);
+    }
+    List<RexNode> whenOperands = new ArrayList<>();
+    for (RexNode rexNode : Util.skipLast(rexNodes)) {
+      whenOperands.add(
+          rexBuilder.makeCall(
+          SqlStdOperatorTable.IS_NOT_NULL, rexNode));
+      whenOperands.add(rexNode);
+    }
+    whenOperands.add(Util.last(rexNodes));
+    return rexBuilder.makeCall(call.getParserPosition(), relDataType, SqlStdOperatorTable.CASE,
+        whenOperands);
   }
 
   protected RexNode convertFloorCeil(SqlRexContext cx, SqlCall call) {

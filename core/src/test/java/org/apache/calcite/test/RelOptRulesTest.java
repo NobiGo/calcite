@@ -6923,7 +6923,7 @@ class RelOptRulesTest extends RelOptTestBase {
         + "  select sum(sal) as sum_sal\n"
         + "  from sales.emp)";
     sql(sql).withRule(CoreRules.PROJECT_AGGREGATE_MERGE)
-        .check();
+        .checkUnchanged();
   }
 
   /** As {@link #testProjectAggregateMergeSum0()} but there is another use of
@@ -6934,7 +6934,7 @@ class RelOptRulesTest extends RelOptTestBase {
         + "  select sum(sal) as sum_sal\n"
         + "  from sales.emp)";
     sql(sql).withRule(CoreRules.PROJECT_AGGREGATE_MERGE)
-        .check();
+        .checkUnchanged();
   }
 
   /** Tests that ProjectAggregateMergeRule does nothing with non-numeric literals
@@ -7101,7 +7101,7 @@ class RelOptRulesTest extends RelOptTestBase {
         .withPreRule(CoreRules.PROJECT_AGGREGATE_MERGE,
             CoreRules.AGGREGATE_PROJECT_MERGE)
         .withRule(CoreRules.AGGREGATE_MERGE)
-        .check();
+        .checkUnchanged();
   }
 
   /**
