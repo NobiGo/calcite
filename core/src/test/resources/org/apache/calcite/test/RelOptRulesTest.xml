@@ -4004,6 +4004,56 @@ EnumerableProject(FNAME=[$1], LNAME=[$2])
 ]]>
     </Resource>
   </TestCase>
+  <TestCase name="testEnumerableFilterRule">
+    <Resource name="sql">
+      <![CDATA[select ename from emp where sal > all (select comm from emp)]]>
+    </Resource>
+    <Resource name="planBefore">
+      <![CDATA[
+LogicalProject(ENAME=[$1])
+  LogicalFilter(condition=[NOT(<= SOME($5, {
+LogicalProject(COMM=[$6])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+}))])
+    LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+    <Resource name="planAfter">
+      <![CDATA[
+EnumerableProject(ENAME=[$1])
+  EnumerableFilter(condition=[NOT(<= SOME($5, {
+LogicalProject(COMM=[$6])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+}))])
+    EnumerableTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testEnumerableProjectRule">
+    <Resource name="sql">
+      <![CDATA[select sal > all (select comm from emp) from emp]]>
+    </Resource>
+    <Resource name="planBefore">
+      <![CDATA[
+LogicalProject(EXPR$0=[NOT(<= SOME($5, {
+LogicalProject(COMM=[$6])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+}))])
+  LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+    <Resource name="planAfter">
+      <![CDATA[
+EnumerableProject(EXPR$0=[NOT(CAST(OR(AND(IS TRUE(<=($5, $9)), <>($10, 0)), AND(>($10, $11), null, <>($10, 0), IS NOT TRUE(<=($5, $9))), AND(<=($5, $9), <>($10, 0), IS NOT TRUE(<=($5, $9)), <=($10, $11)))):BOOLEAN NOT NULL)])
+  EnumerableNestedLoopJoin(condition=[true], joinType=[inner])
+    EnumerableTableScan(table=[[CATALOG, SALES, EMP]])
+    EnumerableProject(m=[$0], c=[$1], d=[$1])
+      EnumerableAggregate(group=[{}], m=[MAX($0)], c=[COUNT()])
+        EnumerableProject(COMM=[$6])
+          EnumerableTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
   <TestCase name="testExchangeRemoveConstantKeysRule">
     <Resource name="planBefore">
       <![CDATA[
