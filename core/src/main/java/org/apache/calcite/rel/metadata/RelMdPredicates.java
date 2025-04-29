@@ -186,14 +186,13 @@ public class RelMdPredicates
     final List<RexNode> projectPullUpPredicates = new ArrayList<>();
 
     ImmutableBitSet.Builder columnsMappedBuilder = ImmutableBitSet.builder();
-    Mapping m = Mappings.create(MappingType.PARTIAL_FUNCTION,
-        input.getRowType().getFieldCount(),
-        project.getRowType().getFieldCount());
-
+    // The keys are field indexes (RexInputRef) that appear in the input of project,
+    // values are sets of field indexes (RexInputRef) that appear in project.
+    Map<Integer, BitSet> equivalence = new HashMap<>();
     for (Ord<RexNode> expr : Ord.zip(project.getProjects())) {
       if (expr.e instanceof RexInputRef) {
         int sIdx = ((RexInputRef) expr.e).getIndex();
-        m.set(sIdx, expr.i);
+        equivalence.computeIfAbsent(sIdx, k -> new BitSet()).set(expr.i);
         columnsMappedBuilder.set(sIdx);
       // Project can also generate constants. We need to include them.
       } else if (RexLiteral.isNullLiteral(expr.e)) {
@@ -217,8 +216,21 @@ public class RelMdPredicates
     for (RexNode r : inputInfo.pulledUpPredicates) {
       RexNode r2 = projectPredicate(rexBuilder, input, r, columnsMapped);
       if (!r2.isAlwaysTrue()) {
-        r2 = r2.accept(new RexPermuteInputsShuttle(m, input));
-        projectPullUpPredicates.add(r2);
+        ImmutableBitSet fields = RelOptUtil.InputFinder.bits(r2);
+        // If r2 cannot find input (such as SubQuery),
+        // it will directly return without adjusting mapping.
+        if (fields.isEmpty()) {
+          projectPullUpPredicates.add(r2);
+          continue;
+        }
+        JoinConditionBasedPredicateInference.ExprsItr exprsItr =
+            new JoinConditionBasedPredicateInference.ExprsItr(fields,
+                equivalence, input.getRowType().getFieldCount(),
+                project.getRowType().getFieldCount());
+        while (exprsItr.hasNext()) {
+          RexNode r3 = r2.accept(new RexPermuteInputsShuttle(exprsItr.next(), input));
+          projectPullUpPredicates.add(r3);
+        }
       }
     }
     return RelOptPredicateList.of(rexBuilder, projectPullUpPredicates);
@@ -741,7 +753,9 @@ public class RelMdPredicates
       if (fields.cardinality() == 0) {
         return Collections.emptyList();
       }
-      return () -> new ExprsItr(fields);
+      return () -> new ExprsItr(fields, equivalence,
+          nSysFields + nFieldsLeft + nFieldsRight,
+          nSysFields + nFieldsLeft + nFieldsRight);
     }
 
     private boolean checkTarget(ImmutableBitSet inferringFields,
@@ -819,14 +833,17 @@ public class RelMdPredicates
      * b + b + e
      * </pre>
      */
-    class ExprsItr implements Iterator<Mapping> {
+    static class ExprsItr implements Iterator<Mapping> {
       final int[] columns;
       final BitSet[] columnSets;
       final int[] iterationIdx;
       Mapping nextMapping;
       boolean firstCall;
+      int sourceCount;
+      int targetCount;
 
-      ExprsItr(ImmutableBitSet fields) {
+      ExprsItr(ImmutableBitSet fields, Map<Integer, BitSet> equivalence,
+          int sourceCount, int targetCount) {
         nextMapping = null;
         columns = new int[fields.cardinality()];
         columnSets = new BitSet[fields.cardinality()];
@@ -838,6 +855,8 @@ public class RelMdPredicates
           iterationIdx[j] = 0;
         }
         firstCall = true;
+        this.sourceCount = sourceCount;
+        this.targetCount = targetCount;
       }
 
       public boolean hasNext() {
@@ -876,9 +895,9 @@ public class RelMdPredicates
       }
 
       private void initializeMapping() {
-        nextMapping = Mappings.create(MappingType.PARTIAL_FUNCTION,
-            nSysFields + nFieldsLeft + nFieldsRight,
-            nSysFields + nFieldsLeft + nFieldsRight);
+        nextMapping =
+            Mappings.create(MappingType.PARTIAL_FUNCTION,
+                sourceCount, targetCount);
         for (int i = 0; i < columnSets.length; i++) {
           BitSet c = columnSets[i];
           int t = c.nextSetBit(iterationIdx[i]);

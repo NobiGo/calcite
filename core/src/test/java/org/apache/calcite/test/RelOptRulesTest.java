@@ -4732,6 +4732,22 @@ class RelOptRulesTest extends RelOptTestBase {
         .checkUnchanged();
   }
 
+  /** Test case of
+   * <a href="https://issues.apache.org/jira/browse/CALCITE-6432">[CALCITE-6432]
+   * Infinite loop for JoinPushTransitivePredicatesRule</a>. */
+  @Test void testProjectPredicatePull() {
+    final String sql = "select e.ename, d.dname\n"
+        + "from (select ename, deptno from emp where deptno = 10) e\n"
+        + "join (select name dname, deptno, * from dept) d\n"
+        + "on e.deptno = d.deptno";
+    final HepProgram program = new HepProgramBuilder()
+        .addRuleCollection(
+            ImmutableList.of(CoreRules.FILTER_PROJECT_TRANSPOSE,
+                CoreRules.JOIN_PUSH_TRANSITIVE_PREDICATES))
+        .build();
+    sql(sql).withProgram(program).check();
+  }
+
   /** Test case for
    * <a href="https://issues.apache.org/jira/browse/CALCITE-2275">[CALCITE-2275]
    * JoinPushTransitivePredicatesRule wrongly pushes down NOT condition</a>. */
