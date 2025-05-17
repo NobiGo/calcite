@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.sql.fun;
 
+import org.apache.calcite.plan.Strong;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlKind;
@@ -30,6 +31,7 @@ import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -73,6 +75,9 @@ public class SqlQuantifyOperator extends SqlInOperator {
         || kind == SqlKind.ALL);
   }
 
+  @Override public @Nullable Supplier<Strong.Policy> getStrongPolicyInference() {
+    return () -> Strong.Policy.ANY;
+  }
 
   @Override public RelDataType deriveType(SqlValidator validator,
       SqlValidatorScope scope, SqlCall call) {
