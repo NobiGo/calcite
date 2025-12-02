@@ -1562,10 +1562,58 @@ class RelToSqlConverterTest {
 
   @Test void testSelectQueryWithLimitClause() {
     String query = "select \"product_id\" from \"product\" limit 100 offset 10";
-    final String expected = "SELECT product_id\n"
-        + "FROM foodmart.product\n"
-        + "LIMIT 100\nOFFSET 10";
-    sql(query).withHive().ok(expected);
+    final String expected = "SELECT `product_id`\n"
+        + "FROM `foodmart`.`product`\n"
+        + "LIMIT 100\n"
+        + "OFFSET 10";
+    final String expectedStarRocks = "SELECT `product_id`\n"
+        + "FROM `foodmart`.`product`\n"
+        + "LIMIT 100\n"
+        + "OFFSET 10";
+    final String expectedSnowflake = "SELECT \"product_id\"\n"
+        + "FROM \"foodmart\".\"product\"\n"
+        + "LIMIT 100\n"
+        + "OFFSET 10";
+    final String expectedVertica = "SELECT \"product_id\"\n"
+        + "FROM \"foodmart\".\"product\"\n"
+        + "LIMIT 100\n"
+        + "OFFSET 10";
+    final String expectedPresto = "SELECT \"product_id\"\n"
+        + "FROM \"foodmart\".\"product\"\n"
+        + "OFFSET 10\n"
+        + "LIMIT 100";
+    final String expectedTrino = "SELECT \"product_id\"\n"
+        + "FROM \"foodmart\".\"product\"\n"
+        + "OFFSET 10 ROWS\n"
+        + "FETCH NEXT 100 ROWS ONLY";
+
+    sql(query).withHive().ok(expected)
+        .withVertica().ok(expectedVertica)
+        .withStarRocks().ok(expectedStarRocks)
+        .withSnowflake().ok(expectedSnowflake)
+        .withPresto().ok(expectedPresto)
+        .withTrino().ok(expectedTrino)
+        .withDoris().ok(expectedStarRocks);
+  }
+
+  /** Test case for
+   * <a href="https://issues.apache.org/jira/browse/CALCITE-7309">[CALCITE-7309]
+   * Position is unparsed incorrectly for ClickHouseSqlDialect</a>. */
+  @Test void testPositionForClickHouse() {
+    final String query = "SELECT POSITION('a' IN 'abca')";
+    final String expected = "SELECT POSITION('abca', 'a')";
+    sql(query).withClickHouse().ok(expected);
+
+    final String query1 = "SELECT POSITION('a' IN 'abca' FROM 1)";
+    final String expected1 = "SELECT POSITION('abca', 'a', 1)";
+    sql(query1).withClickHouse().ok(expected1);
+  }
+
+  @Test void testPositionFunctionForSqlite() {
+    final String query = "select position('A' IN 'ABC') from \"product\"";
+    final String expected = "SELECT INSTR('ABC', 'A')\n"
+        + "FROM \"foodmart\".\"product\"";
+    sql(query).withSQLite().ok(expected);
   }
 
   @Test void testPositionFunctionForHive() {

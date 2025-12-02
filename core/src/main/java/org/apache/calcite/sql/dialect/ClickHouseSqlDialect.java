@@ -157,7 +157,111 @@ public class ClickHouseSqlDialect extends SqlDialect {
           return;
         }
 
-        unparseFloor(writer, call);
+    switch (call.getKind()) {
+    case MAP_VALUE_CONSTRUCTOR:
+      writer.print(call.getOperator().getName().toLowerCase(Locale.ROOT));
+      final SqlWriter.Frame mapFrame = writer.startList("(", ")");
+      for (int i = 0; i < call.operandCount(); i++) {
+        writer.sep(",");
+        call.operand(i).unparse(writer, leftPrec, rightPrec);
+      }
+      writer.endList(mapFrame);
+      break;
+    case ARRAY_VALUE_CONSTRUCTOR:
+      writer.print(call.getOperator().getName().toLowerCase(Locale.ROOT));
+      final SqlWriter.Frame arrayFrame = writer.startList("(", ")");
+      for (SqlNode operand : call.getOperandList()) {
+        writer.sep(",");
+        operand.unparse(writer, leftPrec, rightPrec);
+      }
+      writer.endList(arrayFrame);
+      break;
+    case POSITION:
+      final SqlWriter.Frame f = writer.startFunCall("POSITION");
+      writer.sep(",");
+      call.operand(1).unparse(writer, leftPrec, rightPrec);
+      writer.sep(",");
+      call.operand(0).unparse(writer, leftPrec, rightPrec);
+      if (call.operandCount() == 3) {
+        writer.sep(",");
+        call.operand(2).unparse(writer, leftPrec, rightPrec);
+      }
+      writer.endFunCall(f);
+      break;
+    case FLOOR:
+      if (call.operandCount() != 2) {
+        super.unparseCall(writer, call, leftPrec, rightPrec);
+        return;
+      }
+      unparseFloor(writer, call);
+      break;
+    case STARTS_WITH:
+      writer.print("startsWith");
+      final SqlWriter.Frame startList = writer.startList("(", ")");
+      call.operand(0).unparse(writer, 0, 0);
+      writer.sep(",");
+      call.operand(1).unparse(writer, 0, 0);
+      writer.endList(startList);
+      break;
+    case ENDS_WITH:
+      writer.print("endsWith");
+      final SqlWriter.Frame endsList = writer.startList("(", ")");
+      call.operand(0).unparse(writer, 0, 0);
+      writer.sep(",");
+      call.operand(1).unparse(writer, 0, 0);
+      writer.endList(endsList);
+      break;
+    case BITAND:
+      writer.print("bitAnd");
+      final SqlWriter.Frame bitAndList = writer.startList("(", ")");
+      call.operand(0).unparse(writer, 0, 0);
+      writer.sep(",");
+      call.operand(1).unparse(writer, 0, 0);
+      writer.endList(bitAndList);
+      break;
+    case BITOR:
+      writer.print("bitOr");
+      final SqlWriter.Frame bitOrList = writer.startList("(", ")");
+      call.operand(0).unparse(writer, 0, 0);
+      writer.sep(",");
+      call.operand(1).unparse(writer, 0, 0);
+      writer.endList(bitOrList);
+      break;
+    case BITXOR:
+      writer.print("bitXor");
+      final SqlWriter.Frame bitXorList = writer.startList("(", ")");
+      call.operand(0).unparse(writer, 0, 0);
+      writer.sep(",");
+      call.operand(1).unparse(writer, 0, 0);
+      writer.endList(bitXorList);
+      break;
+    case BITNOT:
+      writer.print("bitNot");
+      final SqlWriter.Frame bitNotList = writer.startList("(", ")");
+      call.operand(0).unparse(writer, 0, 0);
+      writer.endList(bitNotList);
+      break;
+    case COUNT:
+      // CH returns NULL rather than 0 for COUNT(DISTINCT) of NULL values.
+      // https://github.com/yandex/ClickHouse/issues/2494
+      // Wrap the call in a CH specific coalesce (assumeNotNull).
+      if (call.getFunctionQuantifier() != null
+          && call.getFunctionQuantifier().toString().equals("DISTINCT")) {
+        writer.print("assumeNotNull");
+        SqlWriter.Frame frame = writer.startList("(", ")");
+        super.unparseCall(writer, call, leftPrec, rightPrec);
+        writer.endList(frame);
+      } else {
+        super.unparseCall(writer, call, leftPrec, rightPrec);
+      }
+      break;
+    case EXTRACT:
+      SqlLiteral node = call.operand(0);
+      TimeUnitRange unit = node.getValueAs(TimeUnitRange.class);
+      String funName;
+      switch (unit) {
+      case DOW:
+        funName = "DAYOFWEEK";
         break;
 
       case COUNT:
