@@ -4150,6 +4150,77 @@ class RelOptRulesTest extends RelOptTestBase {
         .check();
   }
 
+  /** Test case for
+   * <a href="https://issues.apache.org/jira/browse/CALCITE-2274">[CALCITE-2274]
+   * Filter predicates aren't inferred while using dynamic star in subquery</a>. */
+  @Test void testTransitiveInferenceJoinUsingStar() {
+    final String sql = "SELECT * FROM sales.emp d JOIN\n"
+        + "(SELECT * FROM sales.emp WHERE deptno = 4) e\n"
+        + "ON e.deptno = d.deptno";
+    sql(sql).withPre(getTransitiveProgram())
+        .withRule(CoreRules.JOIN_PUSH_TRANSITIVE_PREDICATES).check();
+  }
+
+  /** Tests propagation of a filter derived from an "IS NOT DISTINCT FROM"
+   * predicate.
+   *
+   * <p>By the time the rule sees the predicate, it has been converted to
+   * "deptno = 10 OR (deptno IS NULL AND 10 IS NULL)", so
+   * {@link #testPullConstantIntoProjectWithIsNotDistinctFromDate()} is a purer
+   * test of the functionality. */
+  @Test void testPullConstantIntoProjectWithIsNotDistinctFrom() {
+    final String sql = "select deptno, deptno + 1, empno + deptno\n"
+        + "from sales.emp\n"
+        + "where deptno is not distinct from 10";
+    sql(sql).withPre(getTransitiveProgram())
+        .withRule(CoreRules.JOIN_PUSH_TRANSITIVE_PREDICATES,
+            CoreRules.FILTER_REDUCE_EXPRESSIONS,
+            CoreRules.PROJECT_REDUCE_EXPRESSIONS)
+        .check();
+  }
+
+  @Test void testPullConstantIntoProjectWithIsNotDistinctFromForNull() {
+    final String sql = "select mgr, deptno\n"
+        + "from sales.emp\n"
+        + "where mgr is not distinct from null";
+    sql(sql).withPre(getTransitiveProgram())
+        .withRule(CoreRules.JOIN_PUSH_TRANSITIVE_PREDICATES,
+            CoreRules.FILTER_REDUCE_EXPRESSIONS,
+            CoreRules.PROJECT_REDUCE_EXPRESSIONS)
+        .check();
+  }
+
+  /** Test case for
+   * <a href="https://issues.apache.org/jira/browse/CALCITE-5336">[CALCITE-5336]
+   * Infer constants from predicates with IS NOT DISTINCT FROM operator</a>.
+   *
+   * <p>Reduce expression rules should identify constants with
+   * {@code IS NOT DISTINCT FROM} operator as they do for {@code =}. */
+  @Test void testPullConstantIntoProjectWithIsNotDistinctFromDate() {
+    // Build a tree equivalent to the SQL
+    //   SELECT hiredate
+    //   FROM emp
+    //   WHERE hiredate IS NOT DISTINCT FROM DATE '2020-12-11'
+    //
+    // We build a tree because if we used the SQL parser, it would expand
+    //   x IS NOT DISTINCT FROM y
+    // to
+    //   x = y OR (x IS NULL AND y IS NULL)
+    final Function<RelBuilder, RelNode> relFn = b ->
+        b.scan("EMP")
+            .filter(
+                b.getRexBuilder()
+                    .makeCall(SqlStdOperatorTable.IS_NOT_DISTINCT_FROM,
+                        b.field(4),
+                        b.literal(new DateString(2020, 12, 11))))
+            .project(b.field(4))
+            .build();
+
+    relFn(relFn)
+        .withRule(CoreRules.PROJECT_REDUCE_EXPRESSIONS)
+        .check();
+  }
+
   @Test void testPullConstantIntoFilter() {
     final String sql = "select * from (select * from sales.emp where deptno = 10)\n"
         + "where deptno + 5 > empno";

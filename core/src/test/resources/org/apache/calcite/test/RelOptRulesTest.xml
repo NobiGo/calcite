@@ -15190,11 +15190,135 @@ LogicalProject(EXPR$0=[1])
     LogicalFilter(condition=[SEARCH($7, Sarg[7, 9, (10..+∞)])])
       LogicalTableScan(table=[[CATALOG, SALES, EMP]])
 ]]>
-        </Resource>
-    </TestCase>
-    <TestCase name="testTransitiveInferenceNoPullUpExprs">
-        <Resource name="sql">
-            <![CDATA[select 1 from sales.emp d
+    </Resource>
+  </TestCase>
+  <TestCase name="testTransitiveInferenceJoin3way">
+    <Resource name="sql">
+      <![CDATA[select 1 from sales.emp d
+inner join sales.emp e on d.deptno = e.deptno
+inner join sales.emp f on e.deptno = f.deptno
+where d.deptno > 7]]>
+    </Resource>
+    <Resource name="planBefore">
+      <![CDATA[
+LogicalProject(EXPR$0=[1])
+  LogicalJoin(condition=[=($16, $25)], joinType=[inner])
+    LogicalJoin(condition=[=($7, $16)], joinType=[inner])
+      LogicalFilter(condition=[>($7, 7)])
+        LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+    LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+    <Resource name="planAfter">
+      <![CDATA[
+LogicalProject(EXPR$0=[1])
+  LogicalJoin(condition=[=($16, $25)], joinType=[inner])
+    LogicalJoin(condition=[=($7, $16)], joinType=[inner])
+      LogicalFilter(condition=[>($7, 7)])
+        LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+      LogicalFilter(condition=[>($7, 7)])
+        LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+    LogicalFilter(condition=[>($7, 7)])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testTransitiveInferenceJoin3wayAgg">
+    <Resource name="sql">
+      <![CDATA[select 1 from
+(select deptno, count(*) from sales.emp where deptno > 7 group by deptno) d
+inner join sales.emp e on d.deptno = e.deptno
+inner join sales.emp f on e.deptno = f.deptno]]>
+    </Resource>
+    <Resource name="planBefore">
+      <![CDATA[
+LogicalProject(EXPR$0=[1])
+  LogicalJoin(condition=[=($9, $18)], joinType=[inner])
+    LogicalJoin(condition=[=($0, $9)], joinType=[inner])
+      LogicalAggregate(group=[{0}], EXPR$1=[COUNT()])
+        LogicalProject(DEPTNO=[$7])
+          LogicalFilter(condition=[>($7, 7)])
+            LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+    LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+    <Resource name="planAfter">
+      <![CDATA[
+LogicalProject(EXPR$0=[1])
+  LogicalJoin(condition=[=($9, $18)], joinType=[inner])
+    LogicalJoin(condition=[=($0, $9)], joinType=[inner])
+      LogicalAggregate(group=[{0}], EXPR$1=[COUNT()])
+        LogicalProject(DEPTNO=[$7])
+          LogicalFilter(condition=[>($7, 7)])
+            LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+      LogicalFilter(condition=[>($7, 7)])
+        LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+    LogicalFilter(condition=[>($7, 7)])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testTransitiveInferenceJoinUsingStar">
+    <Resource name="sql">
+      <![CDATA[SELECT * FROM sales.emp d JOIN
+(SELECT * FROM sales.emp WHERE deptno = 4) e
+ON e.deptno = d.deptno]]>
+    </Resource>
+    <Resource name="planBefore">
+      <![CDATA[
+LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17])
+  LogicalJoin(condition=[=($16, $7)], joinType=[inner])
+    LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+    LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
+      LogicalFilter(condition=[=($7, 4)])
+        LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+    <Resource name="planAfter">
+      <![CDATA[
+LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8], EMPNO0=[$9], ENAME0=[$10], JOB0=[$11], MGR0=[$12], HIREDATE0=[$13], SAL0=[$14], COMM0=[$15], DEPTNO0=[$16], SLACKER0=[$17])
+  LogicalJoin(condition=[=($16, $7)], joinType=[inner])
+    LogicalFilter(condition=[=($7, 4)])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+    LogicalProject(EMPNO=[$0], ENAME=[$1], JOB=[$2], MGR=[$3], HIREDATE=[$4], SAL=[$5], COMM=[$6], DEPTNO=[$7], SLACKER=[$8])
+      LogicalFilter(condition=[=($7, 4)])
+        LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testTransitiveInferenceLeftOuterJoin">
+    <Resource name="sql">
+      <![CDATA[select 1 from sales.emp d
+left outer join sales.emp e on d.deptno = e.deptno
+where d.deptno > 7 and e.deptno > 9]]>
+    </Resource>
+    <Resource name="planBefore">
+      <![CDATA[
+LogicalProject(EXPR$0=[1])
+  LogicalFilter(condition=[>($16, 9)])
+    LogicalJoin(condition=[=($7, $16)], joinType=[left])
+      LogicalFilter(condition=[>($7, 7)])
+        LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+      LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+    <Resource name="planAfter">
+      <![CDATA[
+LogicalProject(EXPR$0=[1])
+  LogicalFilter(condition=[>($16, 9)])
+    LogicalJoin(condition=[=($7, $16)], joinType=[left])
+      LogicalFilter(condition=[>($7, 7)])
+        LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+      LogicalFilter(condition=[>($7, 7)])
+        LogicalTableScan(table=[[CATALOG, SALES, EMP]])
+]]>
+    </Resource>
+  </TestCase>
+  <TestCase name="testTransitiveInferenceNoPullUpExprs">
+    <Resource name="sql">
+      <![CDATA[select 1 from sales.emp d
 inner join sales.emp e on d.deptno = e.deptno
 where d.deptno in (7, 9) or d.comm > 10]]>
         </Resource>
