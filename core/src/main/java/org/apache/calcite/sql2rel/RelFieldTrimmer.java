@@ -462,11 +462,12 @@ public class RelFieldTrimmer implements ReflectiveVisitor {
         ord.e.accept(inputFinder);
       }
     }
-    ImmutableBitSet inputFieldsUsed = inputFinder.build();
+
+    ImmutableBitSet finderFields = inputFinder.build();
 
     // Create input with trimmed columns.
     TrimResult trimResult =
-        trimChild(project, input, inputFieldsUsed, inputExtraFields);
+        trimChild(project, input, finderFields, inputExtraFields);
     RelNode newInput = trimResult.left;
     final Mapping inputMapping = trimResult.right;
 
@@ -485,9 +486,22 @@ public class RelFieldTrimmer implements ReflectiveVisitor {
 
     // Build new project expressions, and populate the mapping.
     final List<RexNode> newProjects = new ArrayList<>();
-    final RexVisitor<RexNode> shuttle =
-        new RexPermuteInputsShuttle(
-            inputMapping, newInput);
+    final RexVisitor<RexNode> shuttle;
+
+    if (!project.getVariablesSet().isEmpty()) {
+      shuttle = new RexPermuteInputsShuttle(inputMapping, newInput) {
+        @Override public RexNode visitSubQuery(RexSubQuery subQuery) {
+          subQuery = (RexSubQuery) super.visitSubQuery(subQuery);
+
+          return RelOptUtil.remapCorrelatesInSuqQuery(relBuilder.getRexBuilder(),
+            subQuery, project.getVariablesSet().iterator().next(),
+              newInput.getRowType(), inputMapping);
+        }
+      };
+    } else {
+      shuttle = new RexPermuteInputsShuttle(inputMapping, newInput);
+    }
+
     final Mapping mapping =
         Mappings.create(
             MappingType.INVERSE_SURJECTION,
@@ -506,9 +520,9 @@ public class RelFieldTrimmer implements ReflectiveVisitor {
             mapping);
 
     relBuilder.push(newInput);
-    relBuilder.project(newProjects, newRowType.getFieldNames());
-    final RelNode newProject = RelOptUtil.propagateRelHints(project, relBuilder.build());
-    return result(newProject, mapping);
+    relBuilder.project(newProjects, newRowType.getFieldNames(), false, project.getVariablesSet());
+    final RelNode newProject = relBuilder.build();
+    return result(newProject, mapping, project);
   }
 
   /** Creates a project with a dummy column, to protect the parts of the system
